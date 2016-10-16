@@ -459,6 +459,7 @@
             data[input.name] = input.value;
         });
         data.status = 1;
+        data.id = locals.activity.id;
         wrapDate(data, 'startTime', 'endTime', 'bookStart', 'bookEnd');
         if (!locals.activity) {
             locals.activity = {};
