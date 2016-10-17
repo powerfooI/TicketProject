@@ -4,6 +4,7 @@
     <title>检票 - 紫荆之声</title>
     <link rel="stylesheet" href="/3rd/bs/css/bootstrap.min.css"/>
     <link rel="stylesheet" href="/css/activity_checkin.css"/>
+    <meta charset="UTF-8">
 </head>
 <body onload="auto_adjust();" onresize="auto_adjust();">
 
@@ -125,7 +126,6 @@
     };
     $(function () {
         swig.setDefaultTZOffset(new Date().getTimezoneOffset());
-        render();
         loginRequired(function () {
             api.get('/api/a/activity/detail', {id: urlParam.id}, function (data) {
                 locals.activity = data;
