@@ -44,6 +44,7 @@ window.api.postForm = function (url, data, success, fail, complete) {
         type: 'POST',
         url: url,
         data: data,
+        contentType: false,
         processData: false
     }).done(function (response, status, xhr) {
         if (response.code != 0) {
