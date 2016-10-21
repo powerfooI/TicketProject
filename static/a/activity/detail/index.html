@@ -459,10 +459,11 @@
             data[input.name] = input.value;
         });
         data.status = 1;
-        data.id = locals.activity.id;
         wrapDate(data, 'startTime', 'endTime', 'bookStart', 'bookEnd');
         if (!locals.activity) {
             locals.activity = {};
+        } else {
+            data.id = locals.activity.id;
         }
         updateObj(locals.activity, data);
         if (checktime()) {
