@@ -189,7 +189,7 @@
         });
         locals.status = 1;
         render();
-        api.post('/api/a/activity/menu', ids, function (data) {
+        api.post('/api/a/activity/menu', {'ids':ids}, function (data) {
             locals.status = 2;
             render();
         }, function (errno, errmsg, e) {
