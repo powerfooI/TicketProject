@@ -33,18 +33,19 @@ function checktime(){
             return false;
         }
     }
-        if(bookend <= bookstart){
-            $('#input-book-end-year').popover({
-                html: true,
-                placement: 'top',
-                title:'',
-                content: '<span style="color:red;">“抢票结束时间”应晚于“抢票开始时间”</span>',
-                trigger: 'focus',
-                container: 'body'
-            });
-            $('#input-book-end-year').focus();
-            return false;
-        }
+    
+    if(bookend <= bookstart){
+        $('#input-book-end-year').popover({
+            html: true,
+            placement: 'top',
+            title:'',
+            content: '<span style="color:red;">“抢票结束时间”应晚于“抢票开始时间”</span>',
+            trigger: 'focus',
+            container: 'body'
+        });
+        $('#input-book-end-year').focus();
+        return false;
+    }
 
     if(actstart <= bookend){
         $('#input-start-year').popover({
