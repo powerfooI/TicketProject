@@ -440,7 +440,7 @@
                 api.get('/api/a/activity/detail', {id: urlParam.id}, function (data) {
                     locals.status = -1;
                     data.id = parseInt(urlParam.id);
-                    updateDate(data, 'startTime', 'endTime', 'bookStart', 'bookEnd');
+                    updateDate(data, 'startTime', 'endTime', 'bookStart', 'bookEnd', 'currentTime');
                     locals.activity = data;
                     render();
                 }, dftFail);
