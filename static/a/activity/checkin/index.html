@@ -129,6 +129,7 @@
         loginRequired(function () {
             api.get('/api/a/activity/detail', {id: urlParam.id}, function (data) {
                 locals.activity = data;
+                updateDate(data, 'startTime', 'endTime');
                 render();
             }, dftFail);
         });
