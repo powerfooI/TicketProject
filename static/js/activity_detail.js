@@ -32,26 +32,27 @@ function checktime(){
             $('#input-book-start-year').focus();
             return false;
         }
-
-        if(bookend <= bookstart){
-            $('#input-book-end-year').popover({
-                html: true,
-                placement: 'top',
-                title:'',
-                content: '<span style="color:red;">“抢票结束时间”应晚于“订票开始时间”</span>',
-                trigger: 'focus',
-                container: 'body'
-            });
-            $('#input-book-end-year').focus();
-            return false;
-        }
     }
+    
+    if(bookend <= bookstart){
+        $('#input-book-end-year').popover({
+            html: true,
+            placement: 'top',
+            title:'',
+            content: '<span style="color:red;">“抢票结束时间”应晚于“抢票开始时间”</span>',
+            trigger: 'focus',
+            container: 'body'
+        });
+        $('#input-book-end-year').focus();
+        return false;
+    }
+
     if(actstart <= bookend){
         $('#input-start-year').popover({
                 html: true,
                 placement: 'top',
                 title:'',
-                content: '<span style="color:red;">“抢票开始时间”应晚于“订票结束时间”</span>',
+                content: '<span style="color:red;">“活动开始时间”应晚于“订票结束时间”</span>',
                 trigger: 'focus',
                 container: 'body'
         });
@@ -63,7 +64,7 @@ function checktime(){
             html: true,
             placement: 'top',
             title:'',
-            content: '<span style="color:red;">“抢票结束时间”应晚于“活动开始时间”</span>',
+            content: '<span style="color:red;">“活动结束时间”应晚于“活动开始时间”</span>',
             trigger: 'focus',
             container: 'body'
         });
