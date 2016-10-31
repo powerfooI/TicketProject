@@ -378,7 +378,7 @@
                     locals.activity = {};
                 }
                 updateObj(locals.activity, data);
-                if (checktime()) {
+                if (checktime() && checkname() && checkticket()) {
                     locals.status = 1;
                     locals.processResult = '';
                     render();
@@ -402,7 +402,7 @@
                     locals.activity = {};
                 }
                 updateObj(locals.activity, data);
-                if (checktime()) {
+                if (checktime() && checkname() && checkticket()) {
                     locals.status = 1;
                     locals.processResult = '';
                     render();
@@ -455,6 +455,9 @@
     var publishActivity = function () {
         var data = {};
         var form = $('#activity-form');
+        enableFields(document.getElementsByTagName("input"));
+        enableFields(document.getElementsByTagName("textarea"));
+        enableFields(document.getElementsByTagName("select"));
         $.each(form.serializeArray(), function (i, input) {
             data[input.name] = input.value;
         });
@@ -466,7 +469,7 @@
             data.id = locals.activity.id;
         }
         updateObj(locals.activity, data);
-        if (checktime()) {
+        if (checktime() && checkname() && checkticket()) {
             locals.status = 1;
             locals.processResult = '';
             render();
@@ -487,6 +490,18 @@
     var uploadImage = function () {
         $('#fileUploadBtn').click();
     };
+    var enableFields = function (fields) {
+        for(var i = 0;i < fields.length; i++) {
+            var field = fields[i];
+            if (field instanceof(Array)) {
+                for (var j = 0;j < field.length; j++) {
+                    field[j].disabled = false;
+                }
+            } else {
+                field.disabled = false;
+            }
+        }
+    }
 </script>
 </body>
 </html>
