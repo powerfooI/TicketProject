@@ -74,6 +74,55 @@ function checktime(){
     return true;
 }
 
+function checkname(){
+    var name = $('#input-name').val();
+    if (name == '') {
+        $('#input-name').popover({
+                    html: true,
+                    placement: 'top',
+                    title:'',
+                    content: '<span style="color:red;">“活动名称不能为空”</span>',
+                    trigger: 'focus',
+                    container: 'body'
+            });
+            $('#input-name').focus();
+            return false;
+        return false;
+    } else {
+        return true;
+    }
+}
+
+function checkticket(){
+    var num = $('#input-total_tickets').val();
+    if (num == '') {
+        $('#input-total_tickets').popover({
+                    html: true,
+                    placement: 'top',
+                    title:'',
+                    content: '<span style="color:red;">“抢票数量不能为空”</span>',
+                    trigger: 'focus',
+                    container: 'body'
+            });
+            $('#input-total_tickets').focus();
+            return false;
+        return false;
+    } else if(Number(num) <= 0) {
+        $('#input-total_tickets').popover({
+                    html: true,
+                    placement: 'top',
+                    title:'',
+                    content: '<span style="color:red;">“票数最少设置为1”</span>',
+                    trigger: 'focus',
+                    container: 'body'
+            });
+            $('#input-total_tickets').focus();
+            return false;
+    } else {
+        return true;
+    }
+}
+
 function initialProgress(checked, ordered, total) {
     $('#tickets-checked').css('width', check_percent(100.0 * checked / total) + '%')
         .tooltip('destroy').tooltip({'title': '已检入：' + checked + '/' + ordered + '=' + (100.0 * checked / ordered).toFixed(2) + '%'});
