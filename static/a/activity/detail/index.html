@@ -397,12 +397,12 @@
             }, function (errno, errmsg, e) {
                 locals.processResult = '失败: [' + errno + '] ' + errmsg + (e ? ": " + e : "");
             }, function (data) {
-                data.status = 0
+                data.status = 0;
                 wrapDate(data, 'startTime', 'endTime', 'bookStart', 'bookEnd');
                 if (!locals.activity) {
                     locals.activity = {};
                 } else {
-                    data.id = locals.activity.id
+                    data.id = locals.activity.id;
                 }
                 updateObj(locals.activity, data);
                 if (checktime() && checkname() && checkticket()) {
