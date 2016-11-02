@@ -6,6 +6,7 @@ import json
 import logging
 import urllib.request
 import xml.etree.ElementTree as ET
+from WeChatTicket.settings import WECHAT_TOKEN, WECHAT_APPID, WECHAT_SECRET
 
 from django.http import Http404, HttpResponse
 from django.template.loader import get_template
@@ -112,14 +113,17 @@ class WeChatError(Exception):
 class WeChatLib(object):
 
     logger = logging.getLogger('wechatlib')
+    access_token = ''
+    access_token_expire = datetime.datetime.fromtimestamp(0)
+    token = WECHAT_TOKEN
+    appid = WECHAT_APPID
+    secret = WECHAT_SECRET
 
     def __init__(self, token, appid, secret):
         super(WeChatLib, self).__init__()
         self.token = token
         self.appid = appid
         self.secret = secret
-        self.access_token = ''
-        self.access_token_expire = datetime.datetime.fromtimestamp(0)
 
     def check_signature(self, signature, timestamp, nonce):
         tmp_list = sorted([self.token, timestamp, nonce])
@@ -146,20 +150,22 @@ class WeChatLib(object):
     def _http_post_dict(cls, url, data):
         return cls._http_post(url, json.dumps(data, ensure_ascii=False))
 
-    def get_wechat_access_token(self):
-        if datetime.datetime.now() >= self.access_token_expire:
-            res = self._http_get(
+    @classmethod
+    def get_wechat_access_token(cls):
+        if datetime.datetime.now() >= cls.access_token_expire:
+            print("appid=%s secret=%s" %(cls.appid, cls.secret))
+            res = cls._http_get(
                 'https://api.weixin.qq.com/cgi-bin/token?grant_type=client_credential&appid=%s&secret=%s' % (
-                    self.appid, self.secret
+                    cls.appid, cls.secret
                 )
             )
             rjson = json.loads(res)
             if rjson.get('errcode'):
                 raise WeChatError(rjson['errcode'], rjson['errmsg'])
-            self.access_token = rjson['access_token']
-            self.access_token_expire = datetime.datetime.now() + datetime.timedelta(seconds=rjson['expires_in'] - 300)
-            self.logger.info('Got access token %s', self.access_token)
-        return self.access_token
+            cls.access_token = rjson['access_token']
+            cls.access_token_expire = datetime.datetime.now() + datetime.timedelta(seconds=rjson['expires_in'] - 300)
+            cls.logger.info('Got access token %s', cls.access_token)
+        return cls.access_token
 
     def get_wechat_menu(self):
         res = self._http_get(
