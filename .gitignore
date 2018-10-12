@@ -66,3 +66,6 @@ target/
 
 # Custom files
 /configs.json
+
+# media
+media/
