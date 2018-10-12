@@ -34,6 +34,8 @@ class Login(APIView):
         if user is not None:
             if user.is_active:
                 login(self.request, user)
+        else:
+            raise BaseError(-1, 'Login Failure')
 
 class Logout(APIView):
     
