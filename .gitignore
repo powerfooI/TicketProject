@@ -64,13 +64,17 @@ target/
 # JetBrains
 .idea
 
-# VS Code
-.vscode
-
 # Custom files
 /configs.json
+
+# VS Code
+.vscode
 
 # virtual environment
 venv
 
+# migrations
 migrations
+
+# media
+media/
