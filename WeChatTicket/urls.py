@@ -26,6 +26,6 @@ urlpatterns = [
     url(r'^admin/', admin.site.urls),
     url(r'^api/u/', include('userpage.urls')),
     url(r'^api/a/', include('adminpage.urls')),
-    url(r'^media/(?P<path>.*)$', serve, {'document_root':settings.MEDIA_ROOT}),
+    url(r'^media/(?P<path>.*)$', serve, {'document_root': settings.MEDIA_ROOT}),
     url(r'^', StaticFileView.as_view()),
 ]

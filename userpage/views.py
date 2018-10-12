@@ -26,6 +26,7 @@ class UserBind(APIView):
         user.student_id = self.input['student_id']
         user.save()
 
+
 class ActivityDetail(APIView):
 
     def get(self):
@@ -45,6 +46,7 @@ class ActivityDetail(APIView):
             'remainTickets': act.remain_tickets,
             'currentTime': time.mktime(datetime.datetime.now().timetuple()),
         }
+
 
 class TicketDetail(APIView):
     
