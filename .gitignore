@@ -66,3 +66,7 @@ target/
 
 # Custom files
 /configs.json
+
+.venv
+venv
+
