@@ -15,15 +15,17 @@ Including another URLconf
 """
 from django.conf.urls import url, include
 from django.contrib import admin
+from django.conf import settings
 
 from wechat.views import CustomWeChatView
 from WeChatTicket.views import StaticFileView
-
+from django.views.static import serve
 
 urlpatterns = [
     url(r'^wechat/?$', CustomWeChatView.as_view()),
     url(r'^admin/', admin.site.urls),
     url(r'^api/u/', include('userpage.urls')),
     url(r'^api/a/', include('adminpage.urls')),
+    url(r'^media/(?P<path>.*)$', serve, {'document_root':settings.MEDIA_ROOT}),
     url(r'^', StaticFileView.as_view()),
 ]

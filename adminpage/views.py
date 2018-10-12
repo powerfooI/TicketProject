@@ -3,9 +3,12 @@ from codex.baseview import APIView
 from django.contrib.auth import authenticate, login, logout
 # from django.contrib.auth.decorators import login_required
 
+from django.conf import settings
 from wechat.models import *
 import time
 import datetime
+import uuid
+import os
 
 # Create your views here.
 
@@ -60,3 +63,18 @@ class ActivityDetail(APIView):
             'currentTime': time.mktime(datetime.datetime.now().timetuple()),
         }
 
+class ImageUpload(APIView):
+
+    @login_required
+    def post(self):
+        self.check_input('image')
+        image = self.input['image'][0]
+        ext = image.name.split('.')[-1]
+        filename = '{}.{}'.format(uuid.uuid4().hex[:10], ext)
+        # return the whole path to the file
+        fname =  os.path.join(settings.MEDIA_ROOT, "pic", filename)
+        with open(fname, 'wb') as pic:
+            for c in image.chunks():
+                pic.write(c)
+        return ''.join([self.request.get_host(), settings.MEDIA_URL, 'pic/', filename])
+        
