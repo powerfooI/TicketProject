@@ -72,9 +72,9 @@ class ImageUpload(APIView):
         ext = image.name.split('.')[-1]
         filename = '{}.{}'.format(uuid.uuid4().hex[:10], ext)
         # return the whole path to the file
-        fname =  os.path.join(settings.MEDIA_ROOT, "pic", filename)
+        fname =  os.path.join(settings.MEDIA_ROOT, "img", filename)
         with open(fname, 'wb') as pic:
             for c in image.chunks():
                 pic.write(c)
-        return ''.join([self.request.get_host(), settings.MEDIA_URL, 'pic/', filename])
+        return ''.join([self.request.get_host(), settings.MEDIA_URL, 'img/', filename])
         
