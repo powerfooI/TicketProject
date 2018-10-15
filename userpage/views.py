@@ -13,7 +13,8 @@ class UserBind(APIView):
         input: self.input['student_id'] and self.input['password']
         raise: ValidateError when validating failed
         """
-        raise NotImplementedError('You should implement UserBind.validate_user method')
+        # raise NotImplementedError('You should implement UserBind.validate_user method')
+        return True
 
     def get(self):
         self.check_input('openid')
