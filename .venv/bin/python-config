@@ -1,4 +1,4 @@
-#!/home/ubuntu/TicketProject/.venv/bin/python
+#!/home/ubuntu/WeChatTicket/.venv/bin/python
 
 import sys
 import getopt
