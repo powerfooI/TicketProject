@@ -65,3 +65,27 @@ class BookEmptyHandler(WeChatHandler):
 
     def handle(self):
         return self.reply_text(self.get_message('book_empty'))
+
+# new added handlers
+class BookWhatHandler(WeChatHandler):
+    def check (self):
+        return self.is_text('抢啥') or self.is_event_click(self.view.event_keys['book_what'])
+    
+    def handle(self):
+        raise NotImplementedError('抢啥的handler，可以利用ActivityDetailHandler的方式，返回一些news即可。（ActivityDetailHandler的实现代码质量不高）')
+        # return self.reply_text(self.get_message('book_what'))
+    
+class ActivityDetailHandler(WeChatHandler):
+    def check (self):
+        return self.is_book_event_click(self.view.event_keys['book_header'])
+    
+    def handle(self):
+        #raise NotImplementedError('抢票的handler，在这里实现逻辑（这个过程可能不标准，代码质量也不高）')
+        actid = int(self.input['EventKey'].split('_')[-1])
+        act = Activity.objects.get(id=actid)
+        return self.reply_single_news({
+            'Title': act.name,
+            'Description': act.description,
+            'Url': self.url_activity(actid),
+        })
+        # return self.reply_text(self.get_message('点击了这个按钮'))

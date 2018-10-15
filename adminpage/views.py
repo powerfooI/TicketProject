@@ -12,10 +12,6 @@ import datetime
 import uuid
 import os
 
-
-# Create your views here.
-
-
 # 系统自带的login_required要设置登录页面 似乎跟我们这个要求不是很符合
 def login_required(func):
     def wrapper(self, *args, **kwargs):
@@ -117,7 +113,7 @@ class ImageUpload(APIView):
         with open(fname, 'wb') as pic:
             for c in image.chunks():
                 pic.write(c)
-        return ''.join([self.request.get_host(), settings.MEDIA_URL, 'img/', filename])
+        return ''.join('http://', [self.request.get_host(), settings.MEDIA_URL, 'img/', filename])
 
 
 class ActivityList(APIView):
@@ -186,15 +182,16 @@ class ActivityMenu(APIView):
 
     @login_required
     def get(self):
-        query_set = Activity.objects.filter(status__gte=0)
-        activities = []
-        for i, item in enumerate(query_set):
-            activities.append({
-                'id': item.id,
-                'name': item.name,
-                'menuIndex': i + 1,
-            })
-        return activities
+        #query_set = Activity.objects.filter(status__gte=0)
+        #activities = []
+        #for i, item in enumerate(query_set):
+        #    activities.append({
+        #        'id': item.id,
+        #        'name': item.name,
+        #        'menuIndex': i + 1,
+        #    })
+        #return activities
+        raise NotImplementedError('This request need to be re implemented.')
 
     @login_required
     def post(self):

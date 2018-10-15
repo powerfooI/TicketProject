@@ -88,6 +88,13 @@ class WeChatHandler(object):
 
     def url_bind(self):
         return settings.get_url('u/bind', {'openid': self.user.open_id})
+    
+    # new added
+    def is_book_event_click(self, event_key):
+        return self.is_msg_type('event') and (self.input['Event'] == 'CLICK') and (re.match('^' + event_key, self.input['EventKey']))
+    
+    def url_activity(self, actid):
+        return settings.get_url('u/activity', {'id': actid})
 
 
 class WeChatEmptyHandler(WeChatHandler):
