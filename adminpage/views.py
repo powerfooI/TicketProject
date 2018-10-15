@@ -172,6 +172,7 @@ class ActivityCreate(APIView):
         new_activity.book_start = self.input['bookStart']
         new_activity.book_end = self.input['bookEnd']
         new_activity.total_tickets = self.input['totalTickets']
+        new_activity.remain_tickets = self.input['totalTickets']
         new_activity.status = self.input['status']
         new_activity.pic_url = self.input['picUrl']
         new_activity.save()
