@@ -13,6 +13,7 @@ class CustomWeChatView(WeChatView):
     handlers = [
         HelpOrSubscribeHandler, UnbindOrUnsubscribeHandler, BindAccountHandler, BookEmptyHandler,
     ]
+    # 加一个抢票handler
     error_message_handler = ErrorHandler
     default_handler = DefaultHandler
 

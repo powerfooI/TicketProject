@@ -13,7 +13,6 @@ class UserBind(APIView):
         input: self.input['student_id'] and self.input['password']
         raise: ValidateError when validating failed
         """
-#         raise NotImplementedError('You should implement UserBind.validate_user method')
         return True
 
     def get(self):
@@ -26,6 +25,7 @@ class UserBind(APIView):
         self.validate_user()
         user.student_id = self.input['student_id']
         user.save()
+
 
 class ActivityDetail(APIView):
 
@@ -46,6 +46,7 @@ class ActivityDetail(APIView):
             'remainTickets': act.remain_tickets,
             'currentTime': time.mktime(datetime.datetime.now().timetuple()),
         }
+
 
 class TicketDetail(APIView):
     
