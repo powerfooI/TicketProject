@@ -14,6 +14,7 @@ from django.template.loader import get_template
 from WeChatTicket import settings
 from codex.baseview import BaseView
 from wechat.models import User
+import re
 
 
 __author__ = "Epsirom"
