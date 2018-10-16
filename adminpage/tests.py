@@ -13,7 +13,7 @@ class UserBindTestCase(TestCase):
 		client_student = Client()
 		client_social_people = Client()
 		student = User.objects.get(open_id='student')
-		social_people = User.object.get(open_id='social_people')
+		social_people = User.objects.get(open_id='social_people')
 
 		res_student = client_student.get('/api/u/user/bind/?', {'openid': student.open_id})
 		self.assertEqual(res_student, '2016013666')
