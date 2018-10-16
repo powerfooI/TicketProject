@@ -18,7 +18,11 @@ class UserBindTestCase(TestCase):
 		User.objects.create(open_id='has_bind',student_id='2016013667')
 
 	def tearDown(self):
-		User.objects.all().delete()
+		User.objects.get(open_id='student').delete()
+		User.objects.get(open_id='social_people').delete()
+		User.objects.get(open_id='right_bind').delete()
+		User.objects.get(open_id='wrong_bind').delete()
+		User.objects.get(open_id='has_bind').delete()
 
 	def test_get_student(self):
 		client_student = Client()
@@ -56,7 +60,7 @@ class UserBindTestCase(TestCase):
 		self.assertEqual(res.json()['code'], '-1')
 
 	def test_post_has_bind(self):
-		res = Client().post('/api/u/user/bind/', {'openid': has_bind, 'student_id': '2016013210', 'password': 'whatever'})
+		res = Client().post('/api/u/user/bind/', {'openid': 'has_bind', 'student_id': '2016013210', 'password': 'whatever'})
 		self.assertEqual(res.json()['code'], '-1')
 
 		
