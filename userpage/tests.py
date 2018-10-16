@@ -1,9 +1,6 @@
 from django.test import TestCase
 import datetime
-import timezone
-# Create your tests here.
-
-from django.test import TestCase
+from django.utils import timezone
 from wechat.models import *
 from django.test import Client
 
@@ -105,22 +102,22 @@ class UserActivityDetailTestCase(TestCase):
     remain_tickets = 999)
 
 	def test_get_right(self):
-		res = self.Client.get('/api/u/activity/detail/', {'id': 1})
+		res = self.client.get('/api/u/activity/detail/', {'id': 1})
 		self.assertEqual(res.json()['code'], 0)
 
 	def test_get_not_exist(self):
-		res = self.Client.get('/api/u/activity/detail/', {'id': 4})
+		res = self.client.get('/api/u/activity/detail/', {'id': 4})
 		self.assertNotEqual(res.json()['code'], 0)
 
 	def test_get_no_id(self):
-		res = self.Client.get('/api/u/activity/detail/')
+		res = self.client.get('/api/u/activity/detail/')
 		self.assertNotEqual(res.json()['code'], 0)
 
 	def test_get_saved(self):
-		res = self.Client.get('/api/u/activity/detail/', {'id': 2})
+		res = self.client.get('/api/u/activity/detail/', {'id': 2})
 		self.assertNotEqual(res.json()['code'], 0)
 
 	def test_get_deleted(self):
-		res = self.Client.get('/api/u/activity/detail/', {'id': 3})
+		res = self.client.get('/api/u/activity/detail/', {'id': 3})
 		self.assertNotEqual(res.json()['code'], 0)
 
