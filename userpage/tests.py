@@ -124,3 +124,69 @@ class UserActivityDetailTestCase(TestCase):
 		res = self.client.get('/api/u/activity/detail/', {'id': act.id})
 		self.assertNotEqual(res.json()['code'], 0)
 
+class UserTicketDetailTestCase(TestCase):
+	def setUp(self):
+		act_a1 = Activity.objects.create(name = 'Activity_A1', key = 'A1', 
+		    description = 'This is activity A1',
+		    start_time = datetime.datetime(2018, 10, 21, 18, 25, 29, tzinfo=timezone.utc),
+		    end_time = datetime.datetime(2018, 10, 22, 18, 25, 29, tzinfo=timezone.utc),
+		    place = 'place_A1',
+		    book_start = datetime.datetime(2018, 10, 18, 10, 25, 29, tzinfo=timezone.utc),
+		    book_end = datetime.datetime(2018, 10, 10, 10, 25, 29, tzinfo=timezone.utc),
+		    total_tickets = 1000,
+		    status = Activity.STATUS_PUBLISHED,
+		    pic_url = 'http://47.95.120.180/media/img/8e7cecab01.jpg',
+		    remain_tickets = 999)
+		User.objects.create(open_id='has_bind1', student_id='2016013666')
+		User.objects.create(open_id='has_bind2', student_id='2016013667')
+		User.objects.create(open_id='not_bind')
+		Ticket.objects.create(student_id='2016013666', unique_id='123456', activity=act_a1, status=1)
+
+	def test_get_right(self):
+		res = self.client.get('/api/u/ticket/detail/', {'openid': 'has_bind1', 'ticket': '123456'})
+		self.assertEqual(res.json()['code'], 0)
+
+	def test_get_not_exist(self):
+		res = self.client.get('/api/u/ticket/detail/', {'openid': 'has_bind1', 'ticket': '123457'})
+		self.assertNotEqual(res.json()['code'], 0)
+
+	def test_get_no_openid(self):
+		res = self.client.get('/api/u/ticket/detail/', {'ticket': '123456'})
+		self.assertNotEqual(res.json()['code'], 0)
+
+	def test_get_no_ticketid(self):
+		res = self.client.get('/api/u/ticket/detail/', {'openid': 'has_bind1'})
+		self.assertNotEqual(res.json()['code'], 0)
+
+	def test_get_wrong_openid(self):
+		res = self.client.get('/api/u/ticket/detail/', {'openid': 'dont_know_bind', 'ticket': '123456'})
+		self.assertNotEqual(res.json()['code'], 0)
+
+	def test_get_not_bind(self):
+		res = self.client.get('/api/u/ticket/detail/', {'openid': 'not_bind', 'ticket': '123456'})
+		self.assertNotEqual(res.json()['code'], 0)
+
+	def test_get_no_ticket(self):
+		res = self.client.get('/api/u/ticket/detail/', {'openid': 'has_bind2', 'ticket': '1234'})
+		self.assertNotEqual(res.json()['code'], 0)
+
+	def test_get_not_match(self):
+		res = self.client.get('/api/u/ticket/detail/', {'openid': 'has_bind2', 'ticket': '123456'})
+		self.assertNotEqual(res.json()['code'], 0)
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
