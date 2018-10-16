@@ -182,16 +182,28 @@ class ActivityMenu(APIView):
 
     @login_required
     def get(self):
-        #query_set = Activity.objects.filter(status__gte=0)
-        #activities = []
-        #for i, item in enumerate(query_set):
-        #    activities.append({
-        #        'id': item.id,
-        #        'name': item.name,
-        #        'menuIndex': i + 1,
-        #    })
-        #return activities
-        raise NotImplementedError('This request need to be re implemented.')
+        # get current
+        existed_ids = CustomWeChatView.get_menu()
+
+        query_set = Activity.objects.filter(status__gte=0)
+        activities = []
+        ind = 1
+        for item in query_set:
+            if item.id in existed_ids:
+                activities.append({
+                    'id': item.id,
+                    'name': item.name,
+                    'menuIndex': ind,
+                })
+                ind += 1
+            else:
+                activities.append({
+                    'id': item.id,
+                    'name': item.name,
+                    'menuIndex': 0,
+                })
+        return activities
+        #raise NotImplementedError('This request need to be re implemented.')
 
     @login_required
     def post(self):

@@ -110,3 +110,20 @@ class CustomWeChatView(WeChatView):
                 id__in=activity_ids, status=Activity.STATUS_PUBLISHED, book_end__gt=timezone.now()
             ).order_by('book_end')[: 5])
         cls.lib.set_wechat_menu(cls.menu)
+
+    @classmethod
+    def get_menu(cls):
+        current_menu = cls.lib.get_wechat_menu()
+        existed_buttons = list()
+            for btn in current_menu:
+                if btn['name'] == '抢票':
+                    existed_buttons += btn.get('sub_button', list())
+        activity_ids = list()
+        for btn in existed_buttons:
+            if 'key' in btn:
+                activity_id = btn['key']
+                if activity_id.startswith(cls.event_keys['book_header']):
+                    activity_id = activity_id[len(cls.event_keys['book_header']):]
+                if activity_id and activity_id.isdigit():
+                    activity_ids.append(int(activity_id))
+        return activity_ids
