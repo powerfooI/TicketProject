@@ -74,7 +74,7 @@ class BookWhatHandler(WeChatHandler):
     
     def handle(self):
         #raise NotImplementedError('抢啥的handler，可以利用ActivityDetailHandler的方式，返回一些news即可。（ActivityDetailHandler的实现代码质量不高）')
-        published_acts = Activity.objects.filter(status=STATUS_PUBLISHED)
+        published_acts = Activity.objects.filter(status=Activity.STATUS_PUBLISHED)
         response_news = []
         for act in published_acts:
             response_news.append({
