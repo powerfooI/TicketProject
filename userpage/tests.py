@@ -102,11 +102,12 @@ class UserActivityDetailTestCase(TestCase):
     remain_tickets = 999)
 
 	def test_get_right(self):
-		res = self.client.get('/api/u/activity/detail/', {'id': 1})
+		act = Activity.objects.get(key='A1')
+		res = self.client.get('/api/u/activity/detail/', {'id': act.id})
 		self.assertEqual(res.json()['code'], 0)
 
 	def test_get_not_exist(self):
-		res = self.client.get('/api/u/activity/detail/', {'id': 4})
+		res = self.client.get('/api/u/activity/detail/', {'id': 999})
 		self.assertNotEqual(res.json()['code'], 0)
 
 	def test_get_no_id(self):
@@ -114,10 +115,12 @@ class UserActivityDetailTestCase(TestCase):
 		self.assertNotEqual(res.json()['code'], 0)
 
 	def test_get_saved(self):
-		res = self.client.get('/api/u/activity/detail/', {'id': 2})
+		act = Activity.objects.get(key='A2')
+		res = self.client.get('/api/u/activity/detail/', {'id': act.id})
 		self.assertNotEqual(res.json()['code'], 0)
 
 	def test_get_deleted(self):
-		res = self.client.get('/api/u/activity/detail/', {'id': 3})
+		act = Activity.objects.get(key='A3')
+		res = self.client.get('/api/u/activity/detail/', {'id': act.id})
 		self.assertNotEqual(res.json()['code'], 0)
 
