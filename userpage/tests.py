@@ -17,12 +17,13 @@ class UserBindTestCase(TestCase):
 		User.objects.create(open_id='wrong_bind')
 		User.objects.create(open_id='has_bind',student_id='2016013667')
 
-	def tearDown(self):
-		User.objects.get(open_id='student').delete()
-		User.objects.get(open_id='social_people').delete()
-		User.objects.get(open_id='right_bind').delete()
-		User.objects.get(open_id='wrong_bind').delete()
-		User.objects.get(open_id='has_bind').delete()
+	#def tearDown(self):
+		#a = User.objects.get(open_id='student')
+		#a.delete()
+		#User.objects.get(open_id='social_people').delete()
+		#User.objects.get(open_id='right_bind').delete()
+		#User.objects.get(open_id='wrong_bind').delete()
+		#User.objects.get(open_id='has_bind').delete()
 
 	def test_get_student(self):
 		client_student = Client()
@@ -37,31 +38,40 @@ class UserBindTestCase(TestCase):
 
 	def test_get_not_exist(self):
 		res = Client().get('/api/u/user/bind/?', {'openid': 'not_exist_'})
-		self.assertEqual(res.json()['code'], '-1')
+		self.assertNotEqual(res.json()['code'], 0)
 
 	def test_post_right_bind(self):
 		res = Client().post('/api/u/user/bind/', {'openid': 'right_bind', 'student_id': '2016013699', 'password': 'whatever'})
-		self.assertEqual(res.json()['code'], '0')
+		self.assertEqual(res.json()['code'], 0)
 
 	def test_post_no_passwd(self):
 		res = Client().post('/api/u/user/bind/', {'openid': 'wrong_bind', 'student_id': '2016013699'})
-		self.assertEqual(res.json()['code'], '-1')
+		self.assertNotEqual(res.json()['code'], 0)
 
 	def test_post_no_student_id(self):
 		res = Client().post('/api/u/user/bind/', {'openid': 'wrong_bind'})
-		self.assertEqual(res.json()['code'], '-1')
+		self.assertNotEqual(res.json()['code'], 0)
 
 	def test_post_conflict(self):
 		res = Client().post('/api/u/user/bind/', {'openid': 'wrong_bind', 'student_id': '2016013666', 'password':'what_ever'})
-		self.assertEqual(res.json()['code'], '-1')
+		self.assertNotEqual(res.json()['code'], 0)
 
 	def test_post_not_exist(self):
 		res = Client().post('/api/u/user/bind/', {'openid': 'not_exist_', 'student_id': '2016013999', 'password':'what_ever'})
-		self.assertEqual(res.json()['code'], '-1')
+		self.assertNotEqual(res.json()['code'], 0)
 
 	def test_post_has_bind(self):
 		res = Client().post('/api/u/user/bind/', {'openid': 'has_bind', 'student_id': '2016013210', 'password': 'whatever'})
-		self.assertEqual(res.json()['code'], '-1')
+		self.assertNotEqual(res.json()['code'], 0)
+
+class UserActivityDetailTestCase(TestCase):
+	def setUp(self):
+		print('-----------')
+		print(User.objects.get(open_id='student'))
+		print('------------')
+
+	def test_get_right(self):
+		self.assertNotEqual(1, 0)
 
 		
 
