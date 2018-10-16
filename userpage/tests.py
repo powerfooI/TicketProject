@@ -1,5 +1,6 @@
 from django.test import TestCase
-
+import datetime
+import timezone
 # Create your tests here.
 
 from django.test import TestCase
@@ -66,12 +67,60 @@ class UserBindTestCase(TestCase):
 
 class UserActivityDetailTestCase(TestCase):
 	def setUp(self):
-		print('-----------')
-		print(User.objects.get(open_id='student'))
-		print('------------')
+		Activity.objects.create(name = 'Activity_A1', key = 'A1', 
+    description = 'This is activity A1',
+    start_time = datetime.datetime(2018, 10, 21, 18, 25, 29, tzinfo=timezone.utc),
+    end_time = datetime.datetime(2018, 10, 22, 18, 25, 29, tzinfo=timezone.utc),
+    place = 'place_A1',
+    book_start = datetime.datetime(2018, 10, 18, 10, 25, 29, tzinfo=timezone.utc),
+    book_end = datetime.datetime(2018, 10, 10, 10, 25, 29, tzinfo=timezone.utc),
+    total_tickets = 1000,
+    status = Activity.STATUS_PUBLISHED,
+    pic_url = 'http://47.95.120.180/media/img/8e7cecab01.jpg',
+    remain_tickets = 999)
+
+		Activity.objects.create(name = 'Activity_A2', key = 'A2', 
+    description = 'This is activity A2',
+    start_time = datetime.datetime(2018, 10, 21, 18, 25, 29, tzinfo=timezone.utc),
+    end_time = datetime.datetime(2018, 10, 22, 18, 25, 29, tzinfo=timezone.utc),
+    place = 'place_A2',
+    book_start = datetime.datetime(2018, 10, 18, 10, 25, 29, tzinfo=timezone.utc),
+    book_end = datetime.datetime(2018, 10, 10, 10, 25, 29, tzinfo=timezone.utc),
+    total_tickets = 1000,
+    status = Activity.STATUS_SAVED,
+    pic_url = 'http://47.95.120.180/media/img/8e7cecab01.jpg',
+    remain_tickets = 999)
+
+
+		Activity.objects.create(name = 'Activity_A3', key = 'A3',
+    description = 'This is activity A3',
+    start_time = datetime.datetime(2018, 10, 21, 18, 25, 29, tzinfo=timezone.utc),
+    end_time = datetime.datetime(2018, 10, 22, 18, 25, 29, tzinfo=timezone.utc),
+    place = 'place_A3',
+    book_start = datetime.datetime(2018, 10, 18, 10, 25, 29, tzinfo=timezone.utc),
+    book_end = datetime.datetime(2018, 10, 10, 10, 25, 29, tzinfo=timezone.utc),
+    total_tickets = 1000,
+    status = Activity.STATUS_DELETED,
+    pic_url = 'http://47.95.120.180/media/img/8e7cecab01.jpg',
+    remain_tickets = 999)
 
 	def test_get_right(self):
-		self.assertNotEqual(1, 0)
+		res = self.Client.get('/api/u/activity/detail/', {'id': 1})
+		self.assertEqual(res.json()['code'], 0)
 
-		
+	def test_get_not_exist(self):
+		res = self.Client.get('/api/u/activity/detail/', {'id': 4})
+		self.assertNotEqual(res.json()['code'], 0)
+
+	def test_get_no_id(self):
+		res = self.Client.get('/api/u/activity/detail/')
+		self.assertNotEqual(res.json()['code'], 0)
+
+	def test_get_saved(self):
+		res = self.Client.get('/api/u/activity/detail/', {'id': 2})
+		self.assertNotEqual(res.json()['code'], 0)
+
+	def test_get_deleted(self):
+		res = self.Client.get('/api/u/activity/detail/', {'id': 3})
+		self.assertNotEqual(res.json()['code'], 0)
 
