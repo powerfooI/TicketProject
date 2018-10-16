@@ -1,7 +1,8 @@
 # -*- coding: utf-8 -*-
 #
 from wechat.wrapper import WeChatHandler
-from wechat.models import Activity
+from wechat.models import *
+from codex.baseerror import *
 
 
 __author__ = "Epsirom"
@@ -95,7 +96,15 @@ class BookingActivityHandler(WeChatHandler):
         # return self.is_book_event_click(self.view.event_keys['book_header'])
     
     def handle(self):
-        raise NotImplementedError('book activity API not implemented.')
+        try:
+            user = User.objects.get(open_id=self.user.open_id)
+        except User.DoesNotExist:
+            raise BaseError(-1, 'user does not exist.')
+        if user.student_id:
+            # 使用锁创建一个电子票的记录
+            raise NotImplementedError('book activity API not implemented.')
+        else:
+            raise BaseError(-1, '还未绑定，可能需要添加template')
         #raise NotImplementedError('抢票的handler，在这里实现逻辑（这个过程可能不标准，代码质量也不高）')
         #actid = int(self.input['EventKey'].split('_')[-1])
         #act = Activity.objects.get(id=actid)
@@ -110,7 +119,17 @@ class QueryTicketHandler(WeChatHandler):
         return self.is_text('查票') or self.is_event_click(self.view.event_keys['get_ticket'])
 
     def handle(self):
-        raise NotImplementedError('get ticket API not implemented.')
+        try:
+            user = User.objects.get(open_id=self.user.open_id)
+        except User.DoesNotExist:
+            raise BaseError(-1, 'user does not exist.')
+        if user.student_id:
+            tickets = Ticket.objects.filter(student_id=user.student_id)
+            
+            raise NotImplementedError('book activity API not implemented.')
+        else:
+            raise BaseError(-1, '还未绑定，可能需要添加template')
+        raise NotImplementedError('query ticket API not implemented.')
 
 
 class ExtractTicketHandler(WeChatHandler):
@@ -125,7 +144,7 @@ class ExtractTicketHandler(WeChatHandler):
 class RefundTicketHandler(WeChatHandler):
     def check(self):
         if self.is_msg_type('text'):
-            return self.input['Content'].startswith('取票 ')
+            return self.input['Content'].startswith('退票 ')
         return False
 
     def handle(self):
