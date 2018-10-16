@@ -203,7 +203,6 @@ class ActivityMenu(APIView):
                     'menuIndex': 0,
                 })
         return activities
-        #raise NotImplementedError('This request need to be re implemented.')
 
     @login_required
     def post(self):
@@ -212,6 +211,7 @@ class ActivityMenu(APIView):
             act = Activity.objects.get(id=i)
             activities.append(act)
         CustomWeChatView.update_menu(activities)
+
 
 class ActivityChekin(APIView):
 
