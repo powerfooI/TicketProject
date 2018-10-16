@@ -1,6 +1,7 @@
 # -*- coding: utf-8 -*-
 #
 from wechat.wrapper import WeChatHandler
+from wechat.models import Activity
 
 
 __author__ = "Epsirom"
@@ -72,20 +73,63 @@ class BookWhatHandler(WeChatHandler):
         return self.is_text('抢啥') or self.is_event_click(self.view.event_keys['book_what'])
     
     def handle(self):
-        raise NotImplementedError('抢啥的handler，可以利用ActivityDetailHandler的方式，返回一些news即可。（ActivityDetailHandler的实现代码质量不高）')
+        #raise NotImplementedError('抢啥的handler，可以利用ActivityDetailHandler的方式，返回一些news即可。（ActivityDetailHandler的实现代码质量不高）')
+        published_acts = Activity.objects.filter(status=STATUS_PUBLISHED)
+        response_news = []
+        for act in published_acts:
+            response_news.append({
+                'Title': act.name,
+                'Description': act.description,
+                'Url': self.url_activity(act.id),
+                })
+        return self.reply_news(response_news)
         # return self.reply_text(self.get_message('book_what'))
     
-class ActivityDetailHandler(WeChatHandler):
+class BookingActivityHandler(WeChatHandler):
     def check (self):
-        return self.is_book_event_click(self.view.event_keys['book_header'])
+        if self.is_msg_type('text'):
+            return self.input['Content'].startswith('抢票 ')
+        elif self.is_msg_type('event'):
+            return (self.input['Event'] == 'CLICK') and (self.input['EventKey'].startswith(self.view.event_keys['book_header']))
+        return False
+        # return self.is_book_event_click(self.view.event_keys['book_header'])
     
     def handle(self):
+        raise NotImplementedError('book activity API not implemented.')
         #raise NotImplementedError('抢票的handler，在这里实现逻辑（这个过程可能不标准，代码质量也不高）')
-        actid = int(self.input['EventKey'].split('_')[-1])
-        act = Activity.objects.get(id=actid)
-        return self.reply_single_news({
-            'Title': act.name,
-            'Description': act.description,
-            'Url': self.url_activity(actid),
-        })
-        # return self.reply_text(self.get_message('点击了这个按钮'))
+        #actid = int(self.input['EventKey'].split('_')[-1])
+        #act = Activity.objects.get(id=actid)
+        #return self.reply_single_news({
+        #    'Title': act.name,
+        #    'Description': act.description,
+        #    'Url': self.url_activity(actid),
+        #})
+
+class QueryTicketHandler(WeChatHandler):
+    def check(self):
+        return self.is_text('查票') or self.is_event_click(self.view.event_keys['get_ticket'])
+
+    def handle(self):
+        raise NotImplementedError('get ticket API not implemented.')
+
+
+class ExtractTicketHandler(WeChatHandler):
+    def check(self):
+        if self.is_msg_type('text'):
+            return self.input['Content'].startswith('取票 ')
+        return False
+
+    def handle(self):
+        raise NotImplementedError('extract ticket API not implemented.')
+
+class RefundTicketHandler(WeChatHandler):
+    def check(self):
+        if self.is_msg_type('text'):
+            return self.input['Content'].startswith('取票 ')
+        return False
+
+    def handle(self):
+        raise NotImplementedError('refund ticket API not implemented.')
+
+
+

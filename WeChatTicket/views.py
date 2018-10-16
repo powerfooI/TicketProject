@@ -28,6 +28,7 @@ class StaticFileView(BaseView):
             self.logger.warn('Please use nginx/apache to serve static files in production!')
             raise Http404()
         rpath = self.request.path.replace('..', '.').strip('/')
+        print(rpath)
         if '__' in rpath:
             raise Http404('Could not access private static file: ' + self.request.path)
         content = self.get_file(os.path.join(settings.STATIC_ROOT, rpath))

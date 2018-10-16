@@ -69,8 +69,8 @@ target/
 
 .venv
 venv
+.python-version
 .vscode
-
 
 migrations
 
@@ -78,3 +78,7 @@ migrations
 media/
 reload
 uwsgi.ini
+
+# Mac OS file
+.DS_Store 
+*/.DS_Store 
