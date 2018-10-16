@@ -17,6 +17,9 @@ class UserBindTestCase(TestCase):
 		User.objects.create(open_id='wrong_bind')
 		User.objects.create(open_id='has_bind',student_id='2016013667')
 
+	def tearDown(self):
+		User.objects.all().delete()
+
 	def test_get_student(self):
 		client_student = Client()
 		student = User.objects.get(open_id='student')
@@ -25,10 +28,7 @@ class UserBindTestCase(TestCase):
 		self.assertEqual(res_student.json()['data'], '2016013666')
 
 	def test_get_social(self):
-		client_social = Client()
-		social_people = User.objects.get(open_id='social_people')
-
-		res_social = client_social_people.get('/api/u/user/bind/?', {'openid': social_people.open_id})
+		res_social = Client().get('/api/u/user/bind/?', {'openid': 'social_people'})
 		self.assertEqual(res_social.json()['data'], '')
 
 	def test_get_not_exist(self):
