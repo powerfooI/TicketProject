@@ -115,9 +115,9 @@ class CustomWeChatView(WeChatView):
     def get_menu(cls):
         current_menu = cls.lib.get_wechat_menu()
         existed_buttons = list()
-            for btn in current_menu:
-                if btn['name'] == '抢票':
-                    existed_buttons += btn.get('sub_button', list())
+        for btn in current_menu:
+            if btn['name'] == '抢票':
+                existed_buttons += btn.get('sub_button', list())
         activity_ids = list()
         for btn in existed_buttons:
             if 'key' in btn:
