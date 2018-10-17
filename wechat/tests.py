@@ -53,7 +53,7 @@ def generateTextXml(ToUserName, openid, Content, MsgId):
 	msg_type.text = ET.CDATA('text')
 	msg_id.text = str(MsgId)
 
-	return ET.tostring(root)
+	return ET.tostring(root, encoding='utf-8')
 
 def generateClickXml(ToUserName, openid, EventKey):
 	root = ET.Element('xml')
@@ -72,14 +72,7 @@ def generateClickXml(ToUserName, openid, EventKey):
 	event.text = ET.CDATA('CLICK')
 	msg_id.text = ET.CDATA(str(EventKey))
 
-	return ET.tostring(root)
-
-def parseXmlMeg(cls, root_elem):
-	msg = dict()
-	if root_elem.tag == 'xml':
-		for child in root_elem:
-			msg[child.tag] = child.text
-	return msg
+	return ET.tostring(root, encoding='utf-8')
 
 class UserBookWhatHandlerTest(TestCase):
 	def setUp(self):
@@ -122,30 +115,65 @@ class UserBookWhatHandlerTest(TestCase):
     pic_url = 'http://47.95.120.180/media/img/8e7cecab01.jpg',
     remain_tickets = 999)
 
+	def isReplyNews(res, newscount):
+		self.assertTure(newscount > 0)
+
+		self.assertEqual(res.status_code,200)
+		root_elem = ET.fromstring(res.content)
+		self.assertEqual(root_elem.tag == 'xml')
+		
+		children = root_elem.getchildren()
+		Tags = []
+
+		for child in children:
+			Tags.append(child.tag)
+
+		self.assertIs('MsgType' in Tags, True)
+		self.assertIs('Articles' in Tags, True)
+		self.assertIs('ArticleCount' in Tags, True)
+
+		for child in children:
+			if child.tag == 'MsgType':
+				self.assertEqual(child.text, 'news')
+			if child.tag == 'ArticleCount':
+				self.assertEqual(child.text, str(newscount))
+
+	def isReplyText(res):
+		self.assertEqual(res.status_code,200)
+		root_elem = ET.fromstring(res.content)
+		self.assertEqual(root_elem.tag == 'xml')
+		
+		children = root_elem.getchildren()
+		Tags = []
+
+		for child in children:
+			Tags.append(child.tag)
+
+		self.assertIs('MsgType' in Tags, True)
+
+		for child in children:
+			if child.tag == '':
+				self.assertEqual(child.text, 'text')
 
 	def test_post_right_text(self):
 		res = self.client.post('/wechat/', 
 			content_type='application/xml', 
-			data=generateTextXml('daoni', 'student', '抢啥', 123456))
-		# print('---------')
-		# print(res)
-		# print('----------')
+			data=generateTextXml('Toyou', 'student', '抢啥', 123456))
 
-		self.assertEqual(res.status_code,200)
-		msg = self.parseXmlMeg(ET.fromstring(self.request.body))
-
-		print('-----------')
-		print(msg)
-		print('-----------')
+		self.isReplyNews(res, 1)
 
 
+	def test_post_right_click(self):
+		res = self.client.post('/wechat/', 
+			content_type='application/xml', 
+			data=generateClickXml('Toyou', 'student', 'SERVICE_BOOK_WHAT'))
 
+		self.isReplyNews(res, 1)
 
+	def test_post_no_actvity(self):
+		Activity.objects.get(key='A1').delete()
+		res = self.client.post('/wechat/', 
+			content_type='application/xml', 
+			data=generateClickXml('Toyou', 'student', 'SERVICE_BOOK_WHAT'))
 
-
-
-
-
-
-
-
+		self.isReplyText(res)
