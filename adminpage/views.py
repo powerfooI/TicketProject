@@ -53,7 +53,6 @@ class ActivityDetail(APIView):
     @login_required
     def get(self):
         self.check_input('id')
-        print(str(self.input['id']))
         act = Activity.objects.get(id=self.input['id'])
         return {
             'name': act.name,
@@ -67,6 +66,7 @@ class ActivityDetail(APIView):
             'totalTickets': act.total_tickets,
             'picUrl': act.pic_url,
             'remainTickets': act.remain_tickets,
+            'bookedTickets': act.total_tickets - act.remain_tickets,
             'currentTime': time.mktime(datetime.datetime.now().timetuple()),
             'status': act.status,
         }
