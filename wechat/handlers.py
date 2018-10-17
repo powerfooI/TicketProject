@@ -7,6 +7,7 @@ from wechat.wrapper import WeChatHandler
 from wechat.models import *
 from codex.baseerror import *
 from django.db import transaction
+from django.utils import timezone
 
 
 __author__ = "Epsirom"
@@ -114,15 +115,16 @@ class BookingActivityHandler(WeChatHandler):
         # 测试用户是否绑定
         if not user.student_id:
             transaction.rollback(sid)
-            return self.reply_text(self.get_message('bind_account')) 
-        
+            return self.reply_text(self.get_message('bind_account'))
+
         # 处理文本信息的情况
         if self.is_msg_type('text'):
             act_key = self.input['Content'][len("抢票 "):]
+            acts = Activity.objects.select_for_update().filter(key=act_key)
         # 处理点击事件的情况
         else:
-            act_key = int(self.input['EventKey'].split('_')[-1])
-        acts = Activity.objects.select_for_update().filter(key=act_key)
+            act_id = int(self.input['EventKey'].split('_')[-1])
+            acts = Activity.objects.select_for_update().filter(id=act_id)
 
         # 检查活动
         if len(acts) == 0:
@@ -132,7 +134,7 @@ class BookingActivityHandler(WeChatHandler):
         if act.status != Activity.STATUS_PUBLISHED:
             transaction.rollback(sid)
             return self.reply_text("对不起，这儿没有对应的活动:(") 
-        current_timestamp = datetime.timezone.now().timestamp()
+        current_timestamp = timezone.now().timestamp()
         book_start_timestamp = act.book_start.timestamp()
         book_end_timestamp = act.book_end.timestamp()
         if current_timestamp < book_start_timestamp or book_end_timestamp < current_timestamp:
@@ -145,19 +147,19 @@ class BookingActivityHandler(WeChatHandler):
         # 票充足，处理活动表格、电子票表格，失败、成功都则返回对应信息
         act.remain_tickets = act.remain_tickets - 1
         act.save()
-        ticket_unique_id = uuid.uuid1() + str(user.student_id)
+        ticket_unique_id = str(uuid.uuid1()) + str(user.student_id)
         if len(ticket_unique_id) > 64:
             ticket_unique_id = ticket_unique_id[:64]
         Ticket.objects.create(
             student_id = user.student_id,
             unique_id = ticket_unique_id,
-            activity = act_key,
+            activity = act,
             status = Ticket.STATUS_VALID
         )
         return self.reply_single_news({
            'Title': "【 抢票成功 】 " + act.name,
            'Description': act.description,
-           'Url': self.url_activity(actid),
+           'Url': self.url_activity(act.id),
         })
 
 
