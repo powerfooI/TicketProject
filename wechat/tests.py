@@ -5,6 +5,8 @@ from wechat.models import *
 from django.test import Client
 from WeChatTicket import settings
 
+import lxml.etree as ET
+
 '''
 wechat POST:
 /wechat?signature=<content>&timestamp=<timestamp>&nonce=<int_num>&openid=<openid>
@@ -34,6 +36,103 @@ A click event:
 
 '''
 
+def generateTextXml(ToUserName, openid, Content, MsgId):
+	root = ET.Element('xml')
+
+	to_user = ET.SubElement(root, 'ToUserName')
+	from_user = ET.SubElement(root, 'FromUserName')
+	create_time = ET.SubElement(root, 'CreateTime')
+	content = ET.SubElement(root, 'Content')
+	msg_type = ET.SubElement(root, 'MsgType')
+	msg_id = ET.SubElement(root, 'MsgId')
+
+	to_user.text = ET.CDATA(ToUserName)
+	from_user.text = ET.CDATA(openid)
+	create_time.text = str(int(time.mktime(datetime.datetime.now().timetuple())))
+	content.text = ET.CDATA(Content)
+	msg_type.text = ET.CDATA('text')
+	msg_id.text = str(MsgId)
+
+	return ET.tostring(root)
+
+def generateClickXml(ToUserName, openid, EventKey):
+	root = ET.Element('xml')
+
+	to_user = ET.SubElement(root, 'ToUserName')
+	from_user = ET.SubElement(root, 'FromUserName')
+	create_time = ET.SubElement(root, 'CreateTime')
+	event = ET.SubElement(root, 'Event')
+	msg_type = ET.SubElement(root, 'MsgType')
+	event_key = ET.SubElement(root, 'EventKey')
+
+	to_user.text = ET.CDATA(ToUserName)
+	from_user.text = ET.CDATA(openid)
+	create_time.text = str(int(time.mktime(datetime.datetime.now().timetuple())))
+	msg_type.text = ET.CDATA('event')
+	event.text = ET.CDATA('CLICK')
+	msg_id.text = ET.CDATA(str(EventKey))
+
+	return ET.tostring(root)
+
 class UserBookWhatHandlerTest(TestCase):
 	def setUp(self):
 		settings.IGNORE_WECHAT_SIGNATURE = True
+		User.objects.create(open_id='student',student_id='2016013666')
+		User.objects.create(open_id='social_people')
+		Activity.objects.create(name = 'Activity_A1', key = 'A1', 
+    description = 'This is activity A1',
+    start_time = datetime.datetime(2018, 10, 21, 18, 25, 29, tzinfo=timezone.utc),
+    end_time = datetime.datetime(2018, 10, 22, 18, 25, 29, tzinfo=timezone.utc),
+    place = 'place_A1',
+    book_start = datetime.datetime(2018, 10, 18, 10, 25, 29, tzinfo=timezone.utc),
+    book_end = datetime.datetime(2018, 10, 10, 10, 25, 29, tzinfo=timezone.utc),
+    total_tickets = 1000,
+    status = Activity.STATUS_PUBLISHED,
+    pic_url = 'http://47.95.120.180/media/img/8e7cecab01.jpg',
+    remain_tickets = 999)
+
+		Activity.objects.create(name = 'Activity_A2', key = 'A2', 
+    description = 'This is activity A2',
+    start_time = datetime.datetime(2018, 10, 21, 18, 25, 29, tzinfo=timezone.utc),
+    end_time = datetime.datetime(2018, 10, 22, 18, 25, 29, tzinfo=timezone.utc),
+    place = 'place_A2',
+    book_start = datetime.datetime(2018, 10, 18, 10, 25, 29, tzinfo=timezone.utc),
+    book_end = datetime.datetime(2018, 10, 10, 10, 25, 29, tzinfo=timezone.utc),
+    total_tickets = 1000,
+    status = Activity.STATUS_SAVED,
+    pic_url = 'http://47.95.120.180/media/img/8e7cecab01.jpg',
+    remain_tickets = 999)
+
+		Activity.objects.create(name = 'Activity_A3', key = 'A3',
+    description = 'This is activity A3',
+    start_time = datetime.datetime(2018, 10, 21, 18, 25, 29, tzinfo=timezone.utc),
+    end_time = datetime.datetime(2018, 10, 22, 18, 25, 29, tzinfo=timezone.utc),
+    place = 'place_A3',
+    book_start = datetime.datetime(2018, 10, 18, 10, 25, 29, tzinfo=timezone.utc),
+    book_end = datetime.datetime(2018, 10, 10, 10, 25, 29, tzinfo=timezone.utc),
+    total_tickets = 1000,
+    status = Activity.STATUS_DELETED,
+    pic_url = 'http://47.95.120.180/media/img/8e7cecab01.jpg',
+    remain_tickets = 999)
+
+
+	def test_post_right_text(self):
+		res = self.client.post('/wechat/', 
+			content_type='application/xml', 
+			data=generateTextXml('daoni', 'student', '抢啥', 123456))
+		print('---------')
+		print(res)
+		print('----------')
+		self.assertEqual(1,0)
+
+
+
+
+
+
+
+
+
+
+
+
