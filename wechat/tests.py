@@ -1,5 +1,5 @@
 from django.test import TestCase
-import datetime
+import datetime,time
 from django.utils import timezone
 from wechat.models import *
 from django.test import Client
@@ -74,6 +74,13 @@ def generateClickXml(ToUserName, openid, EventKey):
 
 	return ET.tostring(root)
 
+def parseXmlMeg(cls, root_elem):
+	msg = dict()
+	if root_elem.tag == 'xml':
+		for child in root_elem:
+			msg[child.tag] = child.text
+	return msg
+
 class UserBookWhatHandlerTest(TestCase):
 	def setUp(self):
 		settings.IGNORE_WECHAT_SIGNATURE = True
@@ -120,10 +127,16 @@ class UserBookWhatHandlerTest(TestCase):
 		res = self.client.post('/wechat/', 
 			content_type='application/xml', 
 			data=generateTextXml('daoni', 'student', '抢啥', 123456))
-		print('---------')
-		print(res)
-		print('----------')
-		self.assertEqual(1,0)
+		# print('---------')
+		# print(res)
+		# print('----------')
+
+		self.assertEqual(res.status_code,200)
+		msg = self.parseXmlMeg(ET.fromstring(self.request.body))
+
+		print('-----------')
+		print(msg)
+		print('-----------')
 
 
 
