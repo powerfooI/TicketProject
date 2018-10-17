@@ -78,7 +78,7 @@ class customTestCase(TestCase):
 			if child.tag == 'MsgType':
 				self.assertEqual(child.text, 'text')
 			if child.tag == 'Content':
-				self.assertIs(contain_content in child.text)
+				self.assertIs(contain_content in child.text, True)
 
 def generateTextXml(ToUserName, openid, Content, MsgId):
 	root = ET.Element('xml')
@@ -185,9 +185,6 @@ class UserBookWhatHandlerTest(customTestCase):
 class UserQueryTicketHandlerTest(customTestCase):
 	def setUp(self):
 		settings.IGNORE_WECHAT_SIGNATURE = True
-		#User.objects.create(open_id='student_three',student_id='2016013666')
-		#User.objects.create(open_id='student_none',student_id='2016013667')
-		#
 
 		# 活动表只有公布和删除的原因：认为不应该出现未发布就有票的情况
 		# 应该在抢票handlers的测试中出现，未发布活动不能抢票这一用例
@@ -215,7 +212,21 @@ class UserQueryTicketHandlerTest(customTestCase):
 		    pic_url = 'http://47.95.120.180/media/img/8e7cecab01.jpg',
 		    remain_tickets = 999)
 
-		#Ticket.objects.create(student_id='2016013666', unique_id='123456', activity=act_a1, status=Ticket.STATUS_VALID)
+		act_a3 = Activity.objects.create(name = 'Activity_A3', key = 'A3',
+		    description = 'This is activity A3',
+		    start_time = datetime.datetime(2018, 10, 21, 18, 25, 29, tzinfo=timezone.utc),
+		    end_time = datetime.datetime(2018, 10, 22, 18, 25, 29, tzinfo=timezone.utc),
+		    place = 'place_A3',
+		    book_start = datetime.datetime(2018, 10, 18, 10, 25, 29, tzinfo=timezone.utc),
+		    book_end = datetime.datetime(2018, 10, 10, 10, 25, 29, tzinfo=timezone.utc),
+		    total_tickets = 1000,
+		    status = Activity.STATUS_PUBLISHED,
+		    pic_url = 'http://47.95.120.180/media/img/8e7cecab01.jpg',
+		    remain_tickets = 999)
+
+		User.objects.create(openid='student_two', student_id='2016013666')
+		Ticket.objects.create(student_id='2016013666', unique_id='123456', activity=act_a1, status=Ticket.STATUS_VALID)
+		Ticket.objects.create(student_id='2016013666', unique_id='123457', activity=act_a3, status=Ticket.STATUS_USED)
 
 	def test_post_not_bind(self):
 		User.objects.create(open_id='social_people')
@@ -223,6 +234,321 @@ class UserQueryTicketHandlerTest(customTestCase):
 			content_type='application/xml', 
 			data=generateTextXml('Toyou', 'social_people', '查票', 123456))
 
-		self.isReplyText(res, '点此绑定活动')
+		self.isReplyText(res, '点此绑定学号')
 
-	# def 
+	def test_post_no_ticket(self):
+		User.objects.create(open_id='student_none',student_id='2016013667')
+		res = self.client.post('/wechat/', 
+			content_type='application/xml', 
+			data=generateTextXml('Toyou', 'student_none', '查票', 123456))
+
+		self.isReplyText(res, '没有票')
+
+	def test_post_two_tickets_text(self):
+		res = self.client.post('/wechat/', 
+			content_type='application/xml', 
+			data=generateTextXml('Toyou', 'student_two', '查票', 123456))
+
+		self.isReplyNews(res, 2)
+
+	def test_post_two_tickets_click(self):
+		res = self.client.post('/wechat/', 
+			content_type='application/xml', 
+			data=generateClickXml('Toyou', 'student_two', 'SERVICE_GET_TICKET'))
+
+		self.isReplyNews(res, 2)
+
+	def test_post_dontshow_deleted_act(self):
+		act_a2 = Activity.objects.get(key='A2')
+		Ticket.objects.create(student_id='2016013666', unique_id='123458', activity=act_a2, status=Ticket.STATUS_VALID)
+
+		res = self.client.post('/wechat/', 
+			content_type='application/xml', 
+			data=generateClickXml('Toyou', 'student_two', 'SERVICE_GET_TICKET'))
+
+		# 期望刚才创建的和【已删除】活动关联的票是不返回的
+		self.isReplyNews(res, 2)
+
+class UserExtractTicketHandlerTest(customTestCase):
+	# 取票只能回复消息
+	def setUp(self):
+		settings.IGNORE_WECHAT_SIGNATURE = True
+
+		act_a1 = Activity.objects.create(name = 'Activity_A1', key = 'A1', 
+		    description = 'This is activity A1',
+		    start_time = datetime.datetime(2018, 10, 21, 18, 25, 29, tzinfo=timezone.utc),
+		    # 此活动2050年结束。。。。应该一直都可以取票
+		    end_time = datetime.datetime(2050, 10, 22, 18, 25, 29, tzinfo=timezone.utc),
+		    place = 'place_A1',
+		    book_start = datetime.datetime(2018, 10, 18, 10, 25, 29, tzinfo=timezone.utc),
+		    book_end = datetime.datetime(2018, 10, 10, 10, 25, 29, tzinfo=timezone.utc),
+		    total_tickets = 1000,
+		    status = Activity.STATUS_PUBLISHED,
+		    pic_url = 'http://47.95.120.180/media/img/8e7cecab01.jpg',
+		    remain_tickets = 999)
+
+		# 此活动时间已过
+		act_a2 = Activity.objects.create(name = 'Activity_A2', key = 'A2', 
+		    description = 'This is activity A2',
+		    start_time = datetime.datetime(2018, 8, 3, 18, 25, 29, tzinfo=timezone.utc),
+		    end_time = datetime.datetime(2018, 8, 5, 18, 25, 29, tzinfo=timezone.utc),
+		    place = 'place_A2',
+		    book_start = datetime.datetime(2018, 8, 1, 10, 25, 29, tzinfo=timezone.utc),
+		    book_end = datetime.datetime(2018, 8, 2, 10, 25, 29, tzinfo=timezone.utc),
+		    total_tickets = 1000,
+		    status = Activity.STATUS_PUBLISHED,
+		    pic_url = 'http://47.95.120.180/media/img/8e7cecab01.jpg',
+		    remain_tickets = 999)
+
+		User.objects.create(openid='student_666', student_id='2016013666')
+		Ticket.objects.create(student_id='2016013666', unique_id='123456', activity=act_a1, status=Ticket.STATUS_VALID)
+		Ticket.objects.create(student_id='2016013666', unique_id='123457', activity=act_a2, status=Ticket.STATUS_USED)
+
+	def test_post_not_bind(self):
+		User.objects.create(open_id='social_people')
+		res = self.client.post('/wechat/', 
+			content_type='application/xml', 
+			data=generateTextXml('Toyou', 'social_people', '取票 A1', 123456))
+
+		self.isReplyText(res, '点此绑定学号')
+
+	def test_post_no_activity(self):
+		res = self.client.post('/wechat/', 
+			content_type='application/xml', 
+			data=generateTextXml('Toyou', 'student_666', '取票 A3', 123456))
+
+		self.isReplyText(res, '失败 】 活动不存在')
+
+	def test_post_activity_deleted(self):
+		Activity.objects.create(name = 'Activity_A8', key = 'A8', 
+		    description = 'This is activity A8',
+		    start_time = datetime.datetime(2018, 8, 3, 18, 25, 29, tzinfo=timezone.utc),
+		    end_time = datetime.datetime(2018, 8, 5, 18, 25, 29, tzinfo=timezone.utc),
+		    place = 'place_A8',
+		    book_start = datetime.datetime(2018, 8, 1, 10, 25, 29, tzinfo=timezone.utc),
+		    book_end = datetime.datetime(2018, 8, 2, 10, 25, 29, tzinfo=timezone.utc),
+		    total_tickets = 1000,
+		    status = Activity.STATUS_DELETED,
+		    pic_url = 'http://47.95.120.180/media/img/8e7cecab01.jpg',
+		    remain_tickets = 999)
+		res = self.client.post('/wechat/', 
+			content_type='application/xml', 
+			data=generateTextXml('Toyou', 'student_666', '取票 A8', 123456))
+
+		self.isReplyText(res, '失败 】 活动不存在')
+
+	def test_post_activity_saved(self):
+		Activity.objects.create(name = 'Activity_A9', key = 'A9', 
+		    description = 'This is activity A9',
+		    start_time = datetime.datetime(2018, 8, 3, 18, 25, 29, tzinfo=timezone.utc),
+		    end_time = datetime.datetime(2018, 8, 5, 18, 25, 29, tzinfo=timezone.utc),
+		    place = 'place_A9',
+		    book_start = datetime.datetime(2018, 8, 1, 10, 25, 29, tzinfo=timezone.utc),
+		    book_end = datetime.datetime(2018, 8, 2, 10, 25, 29, tzinfo=timezone.utc),
+		    total_tickets = 1000,
+		    status = Activity.STATUS_SAVED,
+		    pic_url = 'http://47.95.120.180/media/img/8e7cecab01.jpg',
+		    remain_tickets = 999)
+		res = self.client.post('/wechat/', 
+			content_type='application/xml', 
+			data=generateTextXml('Toyou', 'student_666', '取票 A9', 123456))
+
+		self.isReplyText(res, '失败 】 活动不存在')
+
+	def test_post_no_corresponding_ticket(self):
+		Activity.objects.create(name = 'Activity_A10', key = 'A10', 
+		    description = 'This is activity A10',
+		    start_time = datetime.datetime(2018, 8, 3, 18, 25, 29, tzinfo=timezone.utc),
+		    end_time = datetime.datetime(2018, 8, 5, 18, 25, 29, tzinfo=timezone.utc),
+		    place = 'place_A10',
+		    book_start = datetime.datetime(2018, 8, 1, 10, 25, 29, tzinfo=timezone.utc),
+		    book_end = datetime.datetime(2018, 8, 2, 10, 25, 29, tzinfo=timezone.utc),
+		    total_tickets = 1000,
+		    status = Activity.STATUS_PUBLISHED,
+		    pic_url = 'http://47.95.120.180/media/img/8e7cecab01.jpg',
+		    remain_tickets = 999)
+
+		res = self.client.post('/wechat/', 
+			content_type='application/xml', 
+			data=generateTextXml('Toyou', 'student_666', '取票 A10', 123456))
+
+		self.isReplyText(res, '失败 】 您没有此活动中未使用的票')
+
+	def test_post_no_valid_ticket_used(self):
+		res = self.client.post('/wechat/', 
+			content_type='application/xml', 
+			data=generateTextXml('Toyou', 'student_666', '取票 A2', 123456))
+
+		self.isReplyText(res, '失败 】 您没有此活动中未使用的票')
+
+	def test_post_no_valid_ticket_cancelled(self):
+		Ticket.objects.get(unique_id = '123457').update(status=Ticket.STATUS_CANCELLED)
+		res = self.client.post('/wechat/', 
+			content_type='application/xml', 
+			data=generateTextXml('Toyou', 'student_666', '取票 A2', 123456))
+
+		self.isReplyText(res, '失败 】 您没有此活动中未使用的票')
+
+	def test_post_pass_time(self):
+		Ticket.objects.get(unique_id = '123457').update(status=Ticket.STATUS_VALID)
+
+		res = self.client.post('/wechat/', 
+			content_type='application/xml', 
+			data=generateTextXml('Toyou', 'student_666', '取票 A2', 123456))
+
+		self.isReplyText(res, '失败 】 活动已经结束')
+
+	def test_post_right(self):
+		# 取票成功
+		res = self.client.post('/wechat/', 
+			content_type='application/xml', 
+			data=generateTextXml('Toyou', 'student_666', '取票 A1', 123456))
+
+		self.isReplyNews(res, 1)
+		tick = Ticket.objects.get(unique_id='123456')
+
+		self.assertEqual(tick.status, Ticket.STATUS_USED)
+
+class UserRefundTicketHandlerTest(customTestCase):
+	# 退票只能回复消息
+	def setUp(self):
+		settings.IGNORE_WECHAT_SIGNATURE = True
+
+		act_a1 = Activity.objects.create(name = 'Activity_A1', key = 'A1', 
+		    description = 'This is activity A1',
+		    start_time = datetime.datetime(2018, 10, 21, 18, 25, 29, tzinfo=timezone.utc),
+		    # 此活动2050年结束。。。。应该一直都可以退票
+		    end_time = datetime.datetime(2050, 10, 22, 18, 25, 29, tzinfo=timezone.utc),
+		    place = 'place_A1',
+		    book_start = datetime.datetime(2018, 10, 18, 10, 25, 29, tzinfo=timezone.utc),
+		    book_end = datetime.datetime(2018, 10, 10, 10, 25, 29, tzinfo=timezone.utc),
+		    total_tickets = 1000,
+		    status = Activity.STATUS_PUBLISHED,
+		    pic_url = 'http://47.95.120.180/media/img/8e7cecab01.jpg',
+		    remain_tickets = 999)
+
+		# 此活动时间已过
+		act_a2 = Activity.objects.create(name = 'Activity_A2', key = 'A2', 
+		    description = 'This is activity A2',
+		    start_time = datetime.datetime(2018, 8, 3, 18, 25, 29, tzinfo=timezone.utc),
+		    end_time = datetime.datetime(2018, 8, 5, 18, 25, 29, tzinfo=timezone.utc),
+		    place = 'place_A2',
+		    book_start = datetime.datetime(2018, 8, 1, 10, 25, 29, tzinfo=timezone.utc),
+		    book_end = datetime.datetime(2018, 8, 2, 10, 25, 29, tzinfo=timezone.utc),
+		    total_tickets = 1000,
+		    status = Activity.STATUS_PUBLISHED,
+		    pic_url = 'http://47.95.120.180/media/img/8e7cecab01.jpg',
+		    remain_tickets = 999)
+
+		User.objects.create(openid='student_666', student_id='2016013666')
+		Ticket.objects.create(student_id='2016013666', unique_id='123456', activity=act_a1, status=Ticket.STATUS_VALID)
+		Ticket.objects.create(student_id='2016013666', unique_id='123457', activity=act_a2, status=Ticket.STATUS_USED)
+
+	def test_post_not_bind(self):
+		User.objects.create(open_id='social_people')
+		res = self.client.post('/wechat/', 
+			content_type='application/xml', 
+			data=generateTextXml('Toyou', 'social_people', '退票 A1', 123456))
+
+		self.isReplyText(res, '点此绑定学号')
+
+	def test_post_no_activity(self):
+		res = self.client.post('/wechat/', 
+			content_type='application/xml', 
+			data=generateTextXml('Toyou', 'student_666', '退票 A3', 123456))
+
+		self.isReplyText(res, '失败 】 活动不存在')
+
+	def test_post_activity_deleted(self):
+		Activity.objects.create(name = 'Activity_A8', key = 'A8', 
+		    description = 'This is activity A8',
+		    start_time = datetime.datetime(2018, 8, 3, 18, 25, 29, tzinfo=timezone.utc),
+		    end_time = datetime.datetime(2018, 8, 5, 18, 25, 29, tzinfo=timezone.utc),
+		    place = 'place_A8',
+		    book_start = datetime.datetime(2018, 8, 1, 10, 25, 29, tzinfo=timezone.utc),
+		    book_end = datetime.datetime(2018, 8, 2, 10, 25, 29, tzinfo=timezone.utc),
+		    total_tickets = 1000,
+		    status = Activity.STATUS_DELETED,
+		    pic_url = 'http://47.95.120.180/media/img/8e7cecab01.jpg',
+		    remain_tickets = 999)
+		res = self.client.post('/wechat/', 
+			content_type='application/xml', 
+			data=generateTextXml('Toyou', 'student_666', '退票 A8', 123456))
+
+		self.isReplyText(res, '失败 】 活动不存在')
+
+	def test_post_activity_saved(self):
+		Activity.objects.create(name = 'Activity_A9', key = 'A9', 
+		    description = 'This is activity A9',
+		    start_time = datetime.datetime(2018, 8, 3, 18, 25, 29, tzinfo=timezone.utc),
+		    end_time = datetime.datetime(2018, 8, 5, 18, 25, 29, tzinfo=timezone.utc),
+		    place = 'place_A9',
+		    book_start = datetime.datetime(2018, 8, 1, 10, 25, 29, tzinfo=timezone.utc),
+		    book_end = datetime.datetime(2018, 8, 2, 10, 25, 29, tzinfo=timezone.utc),
+		    total_tickets = 1000,
+		    status = Activity.STATUS_SAVED,
+		    pic_url = 'http://47.95.120.180/media/img/8e7cecab01.jpg',
+		    remain_tickets = 999)
+		res = self.client.post('/wechat/', 
+			content_type='application/xml', 
+			data=generateTextXml('Toyou', 'student_666', '退票 A9', 123456))
+
+		self.isReplyText(res, '失败 】 活动不存在')
+
+	def test_post_no_corresponding_ticket(self):
+		Activity.objects.create(name = 'Activity_A10', key = 'A10', 
+		    description = 'This is activity A10',
+		    start_time = datetime.datetime(2018, 8, 3, 18, 25, 29, tzinfo=timezone.utc),
+		    end_time = datetime.datetime(2018, 8, 5, 18, 25, 29, tzinfo=timezone.utc),
+		    place = 'place_A10',
+		    book_start = datetime.datetime(2018, 8, 1, 10, 25, 29, tzinfo=timezone.utc),
+		    book_end = datetime.datetime(2018, 8, 2, 10, 25, 29, tzinfo=timezone.utc),
+		    total_tickets = 1000,
+		    status = Activity.STATUS_PUBLISHED,
+		    pic_url = 'http://47.95.120.180/media/img/8e7cecab01.jpg',
+		    remain_tickets = 999)
+
+		res = self.client.post('/wechat/', 
+			content_type='application/xml', 
+			data=generateTextXml('Toyou', 'student_666', '退票 A10', 123456))
+
+		self.isReplyText(res, '失败 】 您没有此活动中未使用的票')
+
+	def test_post_no_valid_ticket_used(self):
+		res = self.client.post('/wechat/', 
+			content_type='application/xml', 
+			data=generateTextXml('Toyou', 'student_666', '退票 A2', 123456))
+
+		self.isReplyText(res, '失败 】 您没有此活动中未使用的票')
+
+	def test_post_no_valid_ticket_cancelled(self):
+		Ticket.objects.get(unique_id = '123457').update(status=Ticket.STATUS_CANCELLED)
+		res = self.client.post('/wechat/', 
+			content_type='application/xml', 
+			data=generateTextXml('Toyou', 'student_666', '退票 A2', 123456))
+
+		self.isReplyText(res, '失败 】 您没有此活动中未使用的票')
+
+	def test_post_pass_time(self):
+		Ticket.objects.get(unique_id = '123457').update(status=Ticket.STATUS_VALID)
+
+		res = self.client.post('/wechat/', 
+			content_type='application/xml', 
+			data=generateTextXml('Toyou', 'student_666', '退票 A2', 123456))
+
+		self.isReplyText(res, '失败 】 活动已经结束')
+
+	def test_post_right(self):
+		# 退票成功
+		origin_remain = Activity.objects.get(key='A1').remain_tickets
+		res = self.client.post('/wechat/', 
+			content_type='application/xml', 
+			data=generateTextXml('Toyou', 'student_666', '退票 A1', 123456))
+
+		self.isReplyNews(res, 1)
+		tick = Ticket.objects.get(unique_id='123456')
+
+		self.assertEqual(tick.status, Ticket.STATUS_CANCELLED)
+
+		new_remain = Activity.objects.get(key='A1').remain_tickets
+		self.assertEqual(new_remain - origin_remain, 1)
