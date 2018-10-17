@@ -111,11 +111,11 @@ class ImageUpload(APIView):
         ext = image.name.split('.')[-1]
         filename = '{}.{}'.format(uuid.uuid4().hex[:10], ext)
         # return the whole path to the file
-        fname = os.path.join(settings.MEDIA_ROOT, "img", filename)
+        fname = os.path.join(settings.STATIC_ROOT, "upload", filename)
         with open(fname, 'wb') as pic:
             for c in image.chunks():
                 pic.write(c)
-        return ''.join('http://', [self.request.get_host(), settings.MEDIA_URL, 'img/', filename])
+        return ''.join(['http://', self.request.get_host(), '/upload/', filename])
 
 
 class ActivityList(APIView):
