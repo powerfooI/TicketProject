@@ -41,7 +41,8 @@ class Login(APIView):
 
 
 class Logout(APIView):
-
+    
+    @login_required
     def post(self):
         logout(self.request)
         if self.request.user.is_authenticated():
