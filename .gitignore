@@ -74,7 +74,7 @@ venv
 
 migrations
 
-# media
+static/upload/
 reload
 uwsgi.ini
 
