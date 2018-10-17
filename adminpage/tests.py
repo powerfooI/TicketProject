@@ -2,13 +2,14 @@ import datetime
 from django.test import TestCase
 from django.utils import timezone
 from wechat.models import *
+from django.contrib.auth.models import User as DjangoUser
 
 
 class LoginUnit(TestCase):
-
     """
         对login接口的测试，前面是对get方法的测试，后面是对post方法的测试
     """
+
     def test_login_with_get_method(self):
         self.client.login(username='admin', password='undefined')
         response = self.client.get('/api/a/login/')
@@ -46,10 +47,10 @@ class LoginUnit(TestCase):
 
 
 class LogoutUnit(TestCase):
-
     """
         对logout接口的测试。
     """
+
     def test_logout_with_login(self):
         self.client.login(username='admin', password='undefined')
         response = self.client.post('/api/a/logout/', {})
@@ -57,7 +58,6 @@ class LogoutUnit(TestCase):
 
 
 class ActivityDetailUnit(TestCase):
-
     """
         对ActivityDetail接口的测试
     """
@@ -136,3 +136,4 @@ class ActivityDetailUnit(TestCase):
     def test_change_details_with_wrong_id(self):
         self.client.login(username='admin', password='undefined')
         self.client.logout()
+
