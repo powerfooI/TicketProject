@@ -36,6 +36,50 @@ A click event:
 
 '''
 
+class customTestCase(TestCase):
+	def isReplyNews(self, res, newscount):
+		self.assertIs(newscount > 0, True)
+
+		self.assertEqual(res.status_code,200)
+		root_elem = ET.fromstring(res.content)
+		self.assertEqual(root_elem.tag,'xml')
+		
+		children = root_elem.getchildren()
+		Tags = []
+
+		for child in children:
+			Tags.append(child.tag)
+
+		self.assertIs('MsgType' in Tags, True)
+		self.assertIs('Articles' in Tags, True)
+		self.assertIs('ArticleCount' in Tags, True)
+
+		for child in children:
+			if child.tag == 'MsgType':
+				self.assertEqual(child.text, 'news')
+			if child.tag == 'ArticleCount':
+				self.assertEqual(child.text, str(newscount))
+
+	def isReplyText(self, res, contain_content = ''):
+		self.assertEqual(res.status_code,200)
+		root_elem = ET.fromstring(res.content)
+		self.assertEqual(root_elem.tag,'xml')
+		
+		children = root_elem.getchildren()
+		Tags = []
+
+		for child in children:
+			Tags.append(child.tag)
+
+		self.assertIs('MsgType' in Tags, True)
+		self.assertIs('Content' in Tags, True)
+
+		for child in children:
+			if child.tag == 'MsgType':
+				self.assertEqual(child.text, 'text')
+			if child.tag == 'Content':
+				self.assertIs(contain_content in child.text)
+
 def generateTextXml(ToUserName, openid, Content, MsgId):
 	root = ET.Element('xml')
 
@@ -74,7 +118,7 @@ def generateClickXml(ToUserName, openid, EventKey):
 
 	return ET.tostring(root, encoding='utf-8')
 
-class UserBookWhatHandlerTest(TestCase):
+class UserBookWhatHandlerTest(customTestCase):
 	def setUp(self):
 		settings.IGNORE_WECHAT_SIGNATURE = True
 		User.objects.create(open_id='student',student_id='2016013666')
@@ -115,46 +159,6 @@ class UserBookWhatHandlerTest(TestCase):
 		    pic_url = 'http://47.95.120.180/media/img/8e7cecab01.jpg',
 		    remain_tickets = 999)
 
-	def isReplyNews(self, res, newscount):
-		self.assertIs(newscount > 0, True)
-
-		self.assertEqual(res.status_code,200)
-		root_elem = ET.fromstring(res.content)
-		self.assertEqual(root_elem.tag,'xml')
-		
-		children = root_elem.getchildren()
-		Tags = []
-
-		for child in children:
-			Tags.append(child.tag)
-
-		self.assertIs('MsgType' in Tags, True)
-		self.assertIs('Articles' in Tags, True)
-		self.assertIs('ArticleCount' in Tags, True)
-
-		for child in children:
-			if child.tag == 'MsgType':
-				self.assertEqual(child.text, 'news')
-			if child.tag == 'ArticleCount':
-				self.assertEqual(child.text, str(newscount))
-
-	def isReplyText(self, res):
-		self.assertEqual(res.status_code,200)
-		root_elem = ET.fromstring(res.content)
-		self.assertEqual(root_elem.tag,'xml')
-		
-		children = root_elem.getchildren()
-		Tags = []
-
-		for child in children:
-			Tags.append(child.tag)
-
-		self.assertIs('MsgType' in Tags, True)
-
-		for child in children:
-			if child.tag == 'MsgType':
-				self.assertEqual(child.text, 'text')
-
 	def test_post_right_text(self):
 		res = self.client.post('/wechat/', 
 			content_type='application/xml', 
@@ -178,6 +182,47 @@ class UserBookWhatHandlerTest(TestCase):
 
 		self.isReplyText(res)
 
-class UserQueryTicketHandlerTest(TestCase):
+class UserQueryTicketHandlerTest(customTestCase):
 	def setUp(self):
-		
+		settings.IGNORE_WECHAT_SIGNATURE = True
+		#User.objects.create(open_id='student_three',student_id='2016013666')
+		#User.objects.create(open_id='student_none',student_id='2016013667')
+		#
+
+		# 活动表只有公布和删除的原因：认为不应该出现未发布就有票的情况
+		# 应该在抢票handlers的测试中出现，未发布活动不能抢票这一用例
+		act_a1 = Activity.objects.create(name = 'Activity_A1', key = 'A1', 
+		    description = 'This is activity A1',
+		    start_time = datetime.datetime(2018, 10, 21, 18, 25, 29, tzinfo=timezone.utc),
+		    end_time = datetime.datetime(2018, 10, 22, 18, 25, 29, tzinfo=timezone.utc),
+		    place = 'place_A1',
+		    book_start = datetime.datetime(2018, 10, 18, 10, 25, 29, tzinfo=timezone.utc),
+		    book_end = datetime.datetime(2018, 10, 10, 10, 25, 29, tzinfo=timezone.utc),
+		    total_tickets = 1000,
+		    status = Activity.STATUS_PUBLISHED,
+		    pic_url = 'http://47.95.120.180/media/img/8e7cecab01.jpg',
+		    remain_tickets = 999)
+
+		act_a2 = Activity.objects.create(name = 'Activity_A2', key = 'A2', 
+		    description = 'This is activity A2',
+		    start_time = datetime.datetime(2018, 10, 21, 18, 25, 29, tzinfo=timezone.utc),
+		    end_time = datetime.datetime(2018, 10, 22, 18, 25, 29, tzinfo=timezone.utc),
+		    place = 'place_A2',
+		    book_start = datetime.datetime(2018, 10, 18, 10, 25, 29, tzinfo=timezone.utc),
+		    book_end = datetime.datetime(2018, 10, 10, 10, 25, 29, tzinfo=timezone.utc),
+		    total_tickets = 1000,
+		    status = Activity.STATUS_DELETED,
+		    pic_url = 'http://47.95.120.180/media/img/8e7cecab01.jpg',
+		    remain_tickets = 999)
+
+		#Ticket.objects.create(student_id='2016013666', unique_id='123456', activity=act_a1, status=Ticket.STATUS_VALID)
+
+	def test_post_not_bind(self):
+		User.objects.create(open_id='social_people')
+		res = self.client.post('/wechat/', 
+			content_type='application/xml', 
+			data=generateTextXml('Toyou', 'social_people', '查票', 123456))
+
+		self.isReplyText(res, '点此绑定活动')
+
+	# def 
