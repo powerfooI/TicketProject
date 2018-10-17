@@ -159,6 +159,8 @@ class ActivityCreate(APIView):
     def post(self):
         self.check_input('name', 'key', 'place', 'description', 'picUrl', 'startTime',
                          'endTime', 'bookStart', 'bookEnd', 'totalTickets', 'status')
+        for key in self.input:
+            print(key+":"+self.input[key])
         try:
             new_activity = Activity()
         except:
