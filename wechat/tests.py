@@ -80,40 +80,40 @@ class UserBookWhatHandlerTest(TestCase):
 		User.objects.create(open_id='student',student_id='2016013666')
 		User.objects.create(open_id='social_people')
 		Activity.objects.create(name = 'Activity_A1', key = 'A1', 
-    description = 'This is activity A1',
-    start_time = datetime.datetime(2018, 10, 21, 18, 25, 29, tzinfo=timezone.utc),
-    end_time = datetime.datetime(2018, 10, 22, 18, 25, 29, tzinfo=timezone.utc),
-    place = 'place_A1',
-    book_start = datetime.datetime(2018, 10, 18, 10, 25, 29, tzinfo=timezone.utc),
-    book_end = datetime.datetime(2018, 10, 10, 10, 25, 29, tzinfo=timezone.utc),
-    total_tickets = 1000,
-    status = Activity.STATUS_PUBLISHED,
-    pic_url = 'http://47.95.120.180/media/img/8e7cecab01.jpg',
-    remain_tickets = 999)
+		    description = 'This is activity A1',
+		    start_time = datetime.datetime(2018, 10, 21, 18, 25, 29, tzinfo=timezone.utc),
+		    end_time = datetime.datetime(2018, 10, 22, 18, 25, 29, tzinfo=timezone.utc),
+		    place = 'place_A1',
+		    book_start = datetime.datetime(2018, 10, 18, 10, 25, 29, tzinfo=timezone.utc),
+		    book_end = datetime.datetime(2018, 10, 10, 10, 25, 29, tzinfo=timezone.utc),
+		    total_tickets = 1000,
+		    status = Activity.STATUS_PUBLISHED,
+		    pic_url = 'http://47.95.120.180/media/img/8e7cecab01.jpg',
+		    remain_tickets = 999)
 
 		Activity.objects.create(name = 'Activity_A2', key = 'A2', 
-    description = 'This is activity A2',
-    start_time = datetime.datetime(2018, 10, 21, 18, 25, 29, tzinfo=timezone.utc),
-    end_time = datetime.datetime(2018, 10, 22, 18, 25, 29, tzinfo=timezone.utc),
-    place = 'place_A2',
-    book_start = datetime.datetime(2018, 10, 18, 10, 25, 29, tzinfo=timezone.utc),
-    book_end = datetime.datetime(2018, 10, 10, 10, 25, 29, tzinfo=timezone.utc),
-    total_tickets = 1000,
-    status = Activity.STATUS_SAVED,
-    pic_url = 'http://47.95.120.180/media/img/8e7cecab01.jpg',
-    remain_tickets = 999)
+		    description = 'This is activity A2',
+		    start_time = datetime.datetime(2018, 10, 21, 18, 25, 29, tzinfo=timezone.utc),
+		    end_time = datetime.datetime(2018, 10, 22, 18, 25, 29, tzinfo=timezone.utc),
+		    place = 'place_A2',
+		    book_start = datetime.datetime(2018, 10, 18, 10, 25, 29, tzinfo=timezone.utc),
+		    book_end = datetime.datetime(2018, 10, 10, 10, 25, 29, tzinfo=timezone.utc),
+		    total_tickets = 1000,
+		    status = Activity.STATUS_SAVED,
+		    pic_url = 'http://47.95.120.180/media/img/8e7cecab01.jpg',
+		    remain_tickets = 999)
 
 		Activity.objects.create(name = 'Activity_A3', key = 'A3',
-    description = 'This is activity A3',
-    start_time = datetime.datetime(2018, 10, 21, 18, 25, 29, tzinfo=timezone.utc),
-    end_time = datetime.datetime(2018, 10, 22, 18, 25, 29, tzinfo=timezone.utc),
-    place = 'place_A3',
-    book_start = datetime.datetime(2018, 10, 18, 10, 25, 29, tzinfo=timezone.utc),
-    book_end = datetime.datetime(2018, 10, 10, 10, 25, 29, tzinfo=timezone.utc),
-    total_tickets = 1000,
-    status = Activity.STATUS_DELETED,
-    pic_url = 'http://47.95.120.180/media/img/8e7cecab01.jpg',
-    remain_tickets = 999)
+		    description = 'This is activity A3',
+		    start_time = datetime.datetime(2018, 10, 21, 18, 25, 29, tzinfo=timezone.utc),
+		    end_time = datetime.datetime(2018, 10, 22, 18, 25, 29, tzinfo=timezone.utc),
+		    place = 'place_A3',
+		    book_start = datetime.datetime(2018, 10, 18, 10, 25, 29, tzinfo=timezone.utc),
+		    book_end = datetime.datetime(2018, 10, 10, 10, 25, 29, tzinfo=timezone.utc),
+		    total_tickets = 1000,
+		    status = Activity.STATUS_DELETED,
+		    pic_url = 'http://47.95.120.180/media/img/8e7cecab01.jpg',
+		    remain_tickets = 999)
 
 	def isReplyNews(self, res, newscount):
 		self.assertIs(newscount > 0, True)
@@ -177,3 +177,7 @@ class UserBookWhatHandlerTest(TestCase):
 			data=generateClickXml('Toyou', 'student', 'SERVICE_BOOK_WHAT'))
 
 		self.isReplyText(res)
+
+class UserQueryTicketHandlerTest(TestCase):
+	def setUp(self):
+		
