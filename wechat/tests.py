@@ -70,7 +70,7 @@ def generateClickXml(ToUserName, openid, EventKey):
 	create_time.text = str(int(time.mktime(datetime.datetime.now().timetuple())))
 	msg_type.text = ET.CDATA('event')
 	event.text = ET.CDATA('CLICK')
-	msg_id.text = ET.CDATA(str(EventKey))
+	event_key.text = ET.CDATA(str(EventKey))
 
 	return ET.tostring(root, encoding='utf-8')
 
@@ -115,7 +115,7 @@ class UserBookWhatHandlerTest(TestCase):
     pic_url = 'http://47.95.120.180/media/img/8e7cecab01.jpg',
     remain_tickets = 999)
 
-	def isReplyNews(res, newscount):
+	def isReplyNews(self, res, newscount):
 		self.assertTure(newscount > 0)
 
 		self.assertEqual(res.status_code,200)
@@ -138,7 +138,7 @@ class UserBookWhatHandlerTest(TestCase):
 			if child.tag == 'ArticleCount':
 				self.assertEqual(child.text, str(newscount))
 
-	def isReplyText(res):
+	def isReplyText(self, res):
 		self.assertEqual(res.status_code,200)
 		root_elem = ET.fromstring(res.content)
 		self.assertEqual(root_elem.tag == 'xml')
