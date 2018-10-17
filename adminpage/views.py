@@ -12,6 +12,7 @@ import datetime
 import uuid
 import os
 
+
 # 系统自带的login_required要设置登录页面 似乎跟我们这个要求不是很符合
 def login_required(func):
     def wrapper(self, *args, **kwargs):
@@ -74,6 +75,8 @@ class ActivityDetail(APIView):
     def post(self):
         self.check_input('id', 'name', 'key', 'place', 'description', 'picUrl', 'startTime',
                          'endTime', 'bookStart', 'bookEnd', 'totalTickets', 'status')
+        for key in self.input:
+            print(key, ":", self.input[key])
         try:
             fetch_activity = Activity.objects.get(id=self.input['id'])
             fetch_activity.description = self.input['description']
