@@ -116,11 +116,11 @@ class UserBookWhatHandlerTest(TestCase):
     remain_tickets = 999)
 
 	def isReplyNews(self, res, newscount):
-		self.assertTure(newscount > 0)
+		self.assertIs(newscount > 0, True)
 
 		self.assertEqual(res.status_code,200)
 		root_elem = ET.fromstring(res.content)
-		self.assertEqual(root_elem.tag == 'xml')
+		self.assertEqual(root_elem.tag,'xml')
 		
 		children = root_elem.getchildren()
 		Tags = []
@@ -141,7 +141,7 @@ class UserBookWhatHandlerTest(TestCase):
 	def isReplyText(self, res):
 		self.assertEqual(res.status_code,200)
 		root_elem = ET.fromstring(res.content)
-		self.assertEqual(root_elem.tag == 'xml')
+		self.assertEqual(root_elem.tag,'xml')
 		
 		children = root_elem.getchildren()
 		Tags = []
@@ -152,7 +152,7 @@ class UserBookWhatHandlerTest(TestCase):
 		self.assertIs('MsgType' in Tags, True)
 
 		for child in children:
-			if child.tag == '':
+			if child.tag == 'MsgType':
 				self.assertEqual(child.text, 'text')
 
 	def test_post_right_text(self):
