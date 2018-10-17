@@ -75,6 +75,7 @@ class LogoutUnit(TestCase):
 
 
 class ActivityDetailUnit(TestCase):
+
     """
         对ActivityDetail接口的测试
     """
@@ -247,3 +248,312 @@ class ActivityDetailUnit(TestCase):
         self.assertEqual(response_post.json()['code'], 0)
         self.assertEqual(response_get.json()['code'], 0)
         self.assertEqual(response_get.json()['data']['status'], 1)
+
+
+# 以下为课上所做
+class ActivityListUnit(TestCase):
+    """
+        对activity list接口的测试
+    """
+
+    def setUp(self):
+        self.user = DjangoUser.objects.create(username='username', password='password')
+        self.act_delete = Activity.objects.create(name='Activity_delete', key='delete',
+                                                  description='This is activity A1',
+                                                  start_time=datetime.datetime(2018, 10, 21, 18, 25, 29,
+                                                                               tzinfo=timezone.utc),
+                                                  end_time=datetime.datetime(2018, 10, 22, 18, 25, 29,
+                                                                             tzinfo=timezone.utc),
+                                                  place='place_A1',
+                                                  book_start=datetime.datetime(2018, 10, 18, 10, 25, 29,
+                                                                               tzinfo=timezone.utc),
+                                                  book_end=datetime.datetime(2018, 10, 19, 10, 25, 29,
+                                                                             tzinfo=timezone.utc),
+                                                  total_tickets=1000,
+                                                  status=Activity.STATUS_DELETED,
+                                                  pic_url='http://47.95.120.180/media/img/8e7cecab01.jpg',
+                                                  remain_tickets=999)
+        self.act_save = Activity.objects.create(name='Activity_save', key='save',
+                                                description='This is activity A2',
+                                                start_time=datetime.datetime(2018, 10, 21, 18, 25, 29,
+                                                                             tzinfo=timezone.utc),
+                                                end_time=datetime.datetime(2018, 10, 22, 18, 25, 29,
+                                                                           tzinfo=timezone.utc),
+                                                place='place_A1',
+                                                book_start=datetime.datetime(2018, 10, 18, 10, 25, 29,
+                                                                             tzinfo=timezone.utc),
+                                                book_end=datetime.datetime(2018, 10, 19, 10, 25, 29,
+                                                                           tzinfo=timezone.utc),
+                                                total_tickets=1000,
+                                                status=Activity.STATUS_SAVED,
+                                                pic_url='http://47.95.120.180/media/img/8e7cecab01.jpg',
+                                                remain_tickets=999)
+        self.act_publish = Activity.objects.create(name='Activity_publish', key='publish',
+                                                   description='This is activity A1',
+                                                   start_time=datetime.datetime(2018, 10, 21, 18, 25, 29,
+                                                                                tzinfo=timezone.utc),
+                                                   end_time=datetime.datetime(2018, 10, 22, 18, 25, 29,
+                                                                              tzinfo=timezone.utc),
+                                                   place='place_A1',
+                                                   book_start=datetime.datetime(2018, 10, 18, 10, 25, 29,
+                                                                                tzinfo=timezone.utc),
+                                                   book_end=datetime.datetime(2018, 10, 19, 10, 25, 29,
+                                                                              tzinfo=timezone.utc),
+                                                   total_tickets=1000,
+                                                   status=Activity.STATUS_PUBLISHED,
+                                                   pic_url='http://47.95.120.180/media/img/8e7cecab01.jpg',
+                                                   remain_tickets=999)
+
+    def test_fetch_list_without_login(self):
+        response = self.client.get('/api/a/activity/list/')
+        self.assertNotEqual(response.json()['code'], 0)
+
+    def test_fetch_list_with_login(self):
+        self.client.force_login(self.user)
+        response = self.client.get('/api/a/activity/list/')
+        self.assertEqual(len(response.json()['data']), 2)
+        for record in response.json()['data']:
+            self.assertGreaterEqual(record['id'], 0)
+
+
+class ActivityDeleteUnit(TestCase):
+    """
+        对activity delete接口的测试
+        疑问1：应该修改delete函数，不应该直接删除数据库中的记录
+    """
+
+    def setUp(self):
+        self.user = DjangoUser.objects.create(username='username', password='password')
+        self.act_delete = Activity.objects.create(name='Activity_delete', key='delete',
+                                                  description='This is activity A1',
+                                                  start_time=datetime.datetime(2018, 10, 21, 18, 25, 29,
+                                                                               tzinfo=timezone.utc),
+                                                  end_time=datetime.datetime(2018, 10, 22, 18, 25, 29,
+                                                                             tzinfo=timezone.utc),
+                                                  place='place_A1',
+                                                  book_start=datetime.datetime(2018, 10, 18, 10, 25, 29,
+                                                                               tzinfo=timezone.utc),
+                                                  book_end=datetime.datetime(2018, 10, 19, 10, 25, 29,
+                                                                             tzinfo=timezone.utc),
+                                                  total_tickets=1000,
+                                                  status=Activity.STATUS_DELETED,
+                                                  pic_url='http://47.95.120.180/media/img/8e7cecab01.jpg',
+                                                  remain_tickets=999)
+        self.act_save = Activity.objects.create(name='Activity_save', key='save',
+                                                description='This is activity A2',
+                                                start_time=datetime.datetime(2018, 10, 21, 18, 25, 29,
+                                                                             tzinfo=timezone.utc),
+                                                end_time=datetime.datetime(2018, 10, 22, 18, 25, 29,
+                                                                           tzinfo=timezone.utc),
+                                                place='place_A1',
+                                                book_start=datetime.datetime(2018, 10, 18, 10, 25, 29,
+                                                                             tzinfo=timezone.utc),
+                                                book_end=datetime.datetime(2018, 10, 19, 10, 25, 29,
+                                                                           tzinfo=timezone.utc),
+                                                total_tickets=1000,
+                                                status=Activity.STATUS_SAVED,
+                                                pic_url='http://47.95.120.180/media/img/8e7cecab01.jpg',
+                                                remain_tickets=999)
+        self.act_publish = Activity.objects.create(name='Activity_publish', key='publish',
+                                                   description='This is activity A1',
+                                                   start_time=datetime.datetime(2018, 10, 21, 18, 25, 29,
+                                                                                tzinfo=timezone.utc),
+                                                   end_time=datetime.datetime(2018, 10, 22, 18, 25, 29,
+                                                                              tzinfo=timezone.utc),
+                                                   place='place_A1',
+                                                   book_start=datetime.datetime(2018, 10, 18, 10, 25, 29,
+                                                                                tzinfo=timezone.utc),
+                                                   book_end=datetime.datetime(2018, 10, 19, 10, 25, 29,
+                                                                              tzinfo=timezone.utc),
+                                                   total_tickets=1000,
+                                                   status=Activity.STATUS_PUBLISHED,
+                                                   pic_url='http://47.95.120.180/media/img/8e7cecab01.jpg',
+                                                   remain_tickets=999)
+
+    def test_delete_without_login(self):
+        response = self.client.post('/api/a/activity/delete/', {
+            'id': self.act_save.id,
+        })
+        self.assertNotEqual(response.json()['code'], 0)
+
+    def test_delete_with_wrong_id(self):
+        self.client.force_login(self.user)
+        response = self.client.post('/api/a/activity/delete/', {
+            'id': 99999,
+        })
+        self.assertNotEqual(response.json()['code'], 0)
+
+    def test_delete_deleted_activity(self):
+        self.client.force_login(self.user)
+        response = self.client.post('/api/a/activity/delete/', {
+            'id': self.act_delete,
+        })
+        self.assertNotEqual(response.json()['code'], 0)
+
+    def test_delete_saved_activity(self):
+        self.client.force_login(self.user)
+        self.client.post('/api/a/activity/delete/', {
+            'id': self.act_save.id,
+        })
+        deleted_act = Activity.objects.get(id=self.act_save.id)
+        self.assertEqual(deleted_act.status, Activity.STATUS_DELETED)
+
+    def test_delete_published_activity(self):
+        self.client.force_login(self.user)
+        self.client.post('/api/a/activity/delete/', {
+            'id': self.act_publish.id,
+        })
+        deleted_act = Activity.objects.get(id=self.act_publish.id)
+        self.assertEqual(deleted_act.status, Activity.STATUS_DELETED)
+
+
+class ActivityCreateUnit(TestCase):
+    """
+        对activity create接口的测试
+        疑问1： 上传的数据如何转换称时间戳？
+    """
+
+    def setUp(self):
+        self.user = DjangoUser.objects.create(username='username', password='password')
+
+    def test_create_without_login(self):
+        response = self.client.post('/api/a/activity/create/', {
+            'name': 'test_test1',
+            'key': 'test_key1',
+            'description': 'test_desc1',
+            'place': 'test_place1',
+            'picUrl': '',
+            'startTime': '2018-10-19T08:00:00.000Z',
+            'endTime': '2018-10-20T08:00:00.000Z',
+            'bookStart': '2018-10-17T08:00:00.000Z',
+            'bookEnd': '2018-10-18T08:00:00.000Z',
+            'totalTickets': 1000,
+            'status': 0,
+        })
+        self.assertNotEqual(response.json()['code'], 0)
+
+    def test_create_with_login(self):
+        self.client.force_login(self.user)
+        response = self.client.post('/api/a/activity/create/', {
+            'name': 'test_name1',
+            'key': 'test_key1',
+            'description': 'test_desc1',
+            'place': 'test_place1',
+            'picUrl': '',
+            'startTime': '2018-10-19T08:00:00.000Z',
+            'endTime': '2018-10-20T08:00:00.000Z',
+            'bookStart': '2018-10-17T08:00:00.000Z',
+            'bookEnd': '2018-10-18T08:00:00.000Z',
+            'totalTickets': 1000,
+            'status': 0,
+        })
+        self.assertEqual(response.json()['code'], 0)
+        created_act = Activity.objects.get(name='test_name1', key='test_key1')
+        self.assertEqual(created_act.place, 'test_place1')
+        self.assertEqual(created_act.id, response.json()['data']['id'])
+
+
+class ActivityCheckinUnit(TestCase):
+    """
+        对activity checkin接口的测试
+        疑问1：未发布也能检票？
+        疑问2：错误的票-人对应，是直接发挥非0code错误还是返回一个可读的信息？
+    """
+
+    def setUp(self):
+        self.manager_user = DjangoUser.objects.create(username='username', password='password')
+        self.act_save = Activity.objects.create(name='Activity_save', key='save',
+                                                description='This is activity A2',
+                                                start_time=datetime.datetime(2018, 10, 21, 18, 25, 29,
+                                                                             tzinfo=timezone.utc),
+                                                end_time=datetime.datetime(2018, 10, 22, 18, 25, 29,
+                                                                           tzinfo=timezone.utc),
+                                                place='place_A1',
+                                                book_start=datetime.datetime(2018, 10, 10, 10, 25, 29,
+                                                                             tzinfo=timezone.utc),
+                                                book_end=datetime.datetime(2018, 10, 19, 10, 25, 29,
+                                                                           tzinfo=timezone.utc),
+                                                total_tickets=1000,
+                                                status=Activity.STATUS_SAVED,
+                                                pic_url='http://47.95.120.180/media/img/8e7cecab01.jpg',
+                                                remain_tickets=999)
+        self.act_publish = Activity.objects.create(name='Activity_publish', key='publish',
+                                                   description='This is activity A1',
+                                                   start_time=datetime.datetime(2018, 10, 21, 18, 25, 29,
+                                                                                tzinfo=timezone.utc),
+                                                   end_time=datetime.datetime(2018, 10, 22, 18, 25, 29,
+                                                                              tzinfo=timezone.utc),
+                                                   place='place_A1',
+                                                   book_start=datetime.datetime(2018, 10, 10, 10, 25, 29,
+                                                                                tzinfo=timezone.utc),
+                                                   book_end=datetime.datetime(2018, 10, 19, 10, 25, 29,
+                                                                              tzinfo=timezone.utc),
+                                                   total_tickets=1000,
+                                                   status=Activity.STATUS_PUBLISHED,
+                                                   pic_url='http://47.95.120.180/media/img/8e7cecab01.jpg',
+                                                   remain_tickets=999)
+        self.user1 = User.objects.create(open_id='open_id_first', student_id='student_id_first')
+        self.user2 = User.objects.create(open_id='open_id_second', student_id='student_id_second')
+        self.ticket_valid = Ticket.objects.create(student_id='student_id_first', unique_id='unique_id_first',
+                                                  activity_id=self.act_save.id, status=Ticket.STATUS_VALID)
+        self.ticket_used = Ticket.objects.create(student_id='student_id_second', unique_id='unique_id_second',
+                                                 activity_id=self.act_publish.id, status=Ticket.STATUS_USED)
+        self.ticket_cancelled = Ticket.objects.create(student_id='student_id_second', unique_id='unique_id_third',
+                                                      activity_id=self.act_publish.id, status=Ticket.STATUS_CANCELLED)
+
+    def test_check_in_without_login(self):
+        response = self.client.post('/api/a/activity/checkin/', {
+            'actId': self.act_publish.id,
+            'ticket': self.ticket_used.unique_id,
+        })
+        self.assertEqual(response.json()['code'], 0)
+
+    def test_check_in_with_wrong_act_id(self):
+        self.client.force_login(self.manager_user)
+        response = self.client.post('/api/a/activity/checkin/', {
+            # 'actId': self.act_publish.id,
+            'ticket': self.ticket_used.unique_id,
+            'actId': 123123,
+        })
+        self.assertNotEqual(response.json()['code'], 0)
+
+    def test_check_in_with_wrong_unique_id(self):
+        self.client.force_login(self.manager_user)
+        response = self.client.post('/api/a/activity/checkin/', {
+            'actId': self.act_publish.id,
+            'ticket': '123123'
+            # 'ticket': self.ticket2.unique_id,
+        })
+        self.assertNotEqual(response.json()['code'], 0)
+
+    def test_check_in_with_wrong_student_id(self):
+        self.client.force_login(self.manager_user)
+        response = self.client.post('/api/a/activity/checkin/', {
+            'actId': self.act_publish.id,
+            'studentId': 'student_id_second',
+        })
+        self.assertNotEqual(response.json()['code'], 0)
+
+    def test_check_in_with_used_ticket(self):
+        self.client.force_login(self.manager_user)
+        response = self.client.post('/api/a/activity/checkin/', {
+            'actId': self.act_publish.id,
+            'ticket': self.ticket_used.unique_id,
+        })
+        self.assertNotEqual(response.json()['code'], 0)
+
+    def test_check_in_with_cancelled_ticket(self):
+        self.client.force_login(self.manager_user)
+        response = self.client.post('/api/a/activity/checkin/', {
+            'actId': self.act_publish.id,
+            'ticket': self.ticket_cancelled.unique_id,
+        })
+        self.assertNotEqual(response.json()['code'], 0)
+
+    def test_check_in_with_valid_ticket(self):
+        self.client.force_login(self.manager_user)
+        response = self.client.post('/api/a/activity/checkin/', {
+            'actId': self.act_save.id,
+            'ticket': self.ticket_valid.unique_id,
+        })
+        self.assertEqual(response.json()['code'], 0)
