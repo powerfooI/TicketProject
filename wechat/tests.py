@@ -224,7 +224,7 @@ class UserQueryTicketHandlerTest(customTestCase):
 		    pic_url = 'http://47.95.120.180/media/img/8e7cecab01.jpg',
 		    remain_tickets = 999)
 
-		User.objects.create(openid='student_two', student_id='2016013666')
+		User.objects.create(open_id='student_two', student_id='2016013666')
 		Ticket.objects.create(student_id='2016013666', unique_id='123456', activity=act_a1, status=Ticket.STATUS_VALID)
 		Ticket.objects.create(student_id='2016013666', unique_id='123457', activity=act_a3, status=Ticket.STATUS_USED)
 
@@ -300,7 +300,7 @@ class UserExtractTicketHandlerTest(customTestCase):
 		    pic_url = 'http://47.95.120.180/media/img/8e7cecab01.jpg',
 		    remain_tickets = 999)
 
-		User.objects.create(openid='student_666', student_id='2016013666')
+		User.objects.create(open_id='student_666', student_id='2016013666')
 		Ticket.objects.create(student_id='2016013666', unique_id='123456', activity=act_a1, status=Ticket.STATUS_VALID)
 		Ticket.objects.create(student_id='2016013666', unique_id='123457', activity=act_a2, status=Ticket.STATUS_USED)
 
@@ -382,7 +382,10 @@ class UserExtractTicketHandlerTest(customTestCase):
 		self.isReplyText(res, '失败 】 您没有此活动中未使用的票')
 
 	def test_post_no_valid_ticket_cancelled(self):
-		Ticket.objects.get(unique_id = '123457').update(status=Ticket.STATUS_CANCELLED)
+		tick = Ticket.objects.get(unique_id = '123457')
+		tick.status = Ticket.STATUS_CANCELLED
+		tick.save()
+		
 		res = self.client.post('/wechat/', 
 			content_type='application/xml', 
 			data=generateTextXml('Toyou', 'student_666', '取票 A2', 123456))
@@ -390,7 +393,9 @@ class UserExtractTicketHandlerTest(customTestCase):
 		self.isReplyText(res, '失败 】 您没有此活动中未使用的票')
 
 	def test_post_pass_time(self):
-		Ticket.objects.get(unique_id = '123457').update(status=Ticket.STATUS_VALID)
+		tick = Ticket.objects.get(unique_id = '123457')
+		tick.status = Ticket.STATUS_VALID
+		tick.save()
 
 		res = self.client.post('/wechat/', 
 			content_type='application/xml', 
@@ -440,7 +445,7 @@ class UserRefundTicketHandlerTest(customTestCase):
 		    pic_url = 'http://47.95.120.180/media/img/8e7cecab01.jpg',
 		    remain_tickets = 999)
 
-		User.objects.create(openid='student_666', student_id='2016013666')
+		User.objects.create(open_id='student_666', student_id='2016013666')
 		Ticket.objects.create(student_id='2016013666', unique_id='123456', activity=act_a1, status=Ticket.STATUS_VALID)
 		Ticket.objects.create(student_id='2016013666', unique_id='123457', activity=act_a2, status=Ticket.STATUS_USED)
 
@@ -522,7 +527,10 @@ class UserRefundTicketHandlerTest(customTestCase):
 		self.isReplyText(res, '失败 】 您没有此活动中未使用的票')
 
 	def test_post_no_valid_ticket_cancelled(self):
-		Ticket.objects.get(unique_id = '123457').update(status=Ticket.STATUS_CANCELLED)
+		tick = Ticket.objects.get(unique_id = '123457')
+		tick.status = Ticket.STATUS_CANCELLED
+		tick.save()
+		
 		res = self.client.post('/wechat/', 
 			content_type='application/xml', 
 			data=generateTextXml('Toyou', 'student_666', '退票 A2', 123456))
@@ -530,7 +538,9 @@ class UserRefundTicketHandlerTest(customTestCase):
 		self.isReplyText(res, '失败 】 您没有此活动中未使用的票')
 
 	def test_post_pass_time(self):
-		Ticket.objects.get(unique_id = '123457').update(status=Ticket.STATUS_VALID)
+		tick = Ticket.objects.get(unique_id = '123457')
+		tick.status = Ticket.STATUS_VALID
+		tick.save()
 
 		res = self.client.post('/wechat/', 
 			content_type='application/xml', 
