@@ -14,7 +14,8 @@ def debug_print(msg):
 
 class LoginUnit(TestCase):
     """
-        对login接口的测试，前面是对get方法的测试，后面是对post方法的测试
+        对login接口的测试，前面是对get方法的测试，后面是对post方法的测试.
+        函数名即测试内容。
     """
 
     def setUp(self):
@@ -75,37 +76,59 @@ class LogoutUnit(TestCase):
 
 
 class ActivityDetailUnit(TestCase):
-
     """
         对ActivityDetail接口的测试
     """
 
     def setUp(self):
         self.user = DjangoUser.objects.create(username='admin', password='undefined')
-        self.act1 = Activity.objects.create(name='Activity_A1', key='A1',
-                                            description='This is activity A1',
-                                            start_time=datetime.datetime(2018, 10, 24, 18, 25, 29, tzinfo=timezone.utc),
-                                            end_time=datetime.datetime(2018, 10, 25, 18, 25, 29, tzinfo=timezone.utc),
-                                            place='place_A1',
-                                            book_start=datetime.datetime(2018, 10, 22, 10, 25, 29, tzinfo=timezone.utc),
-                                            book_end=datetime.datetime(2018, 10, 23, 10, 25, 29, tzinfo=timezone.utc),
-                                            total_tickets=1000,
-                                            status=Activity.STATUS_SAVED,
-                                            pic_url='http://47.95.120.180/media/img/8e7cecab01.jpg',
-                                            remain_tickets=999)
-        self.act2 = Activity.objects.create(name='Activity_A2', key='A2',
-                                            description='This is activity A2',
-                                            start_time=datetime.datetime(2018, 10, 24, 18, 25, 29, tzinfo=timezone.utc),
-                                            end_time=datetime.datetime(2018, 10, 25, 18, 25, 29, tzinfo=timezone.utc),
-                                            place='place_A2',
-                                            book_start=datetime.datetime(2018, 10, 22, 10, 25, 29, tzinfo=timezone.utc),
-                                            book_end=datetime.datetime(2018, 10, 23, 10, 25, 29, tzinfo=timezone.utc),
-                                            total_tickets=1000,
-                                            status=Activity.STATUS_PUBLISHED,
-                                            pic_url='http://47.95.120.180/media/img/8e7cecab01.jpg',
-                                            remain_tickets=999)
-        self.act_end = Activity.objects.create(name='Activity_A3', key='A3',
-                                               description='This is activity A3, started',
+        self.act_saved = Activity.objects.create(name='Activity_A1', key='A1',
+                                                 description='This is activity A1',
+                                                 start_time=datetime.datetime(2018, 10, 24, 18, 25, 29,
+                                                                              tzinfo=timezone.utc),
+                                                 end_time=datetime.datetime(2018, 10, 25, 18, 25, 29,
+                                                                            tzinfo=timezone.utc),
+                                                 place='place_A1',
+                                                 book_start=datetime.datetime(2018, 10, 22, 10, 25, 29,
+                                                                              tzinfo=timezone.utc),
+                                                 book_end=datetime.datetime(2018, 10, 23, 10, 25, 29,
+                                                                            tzinfo=timezone.utc),
+                                                 total_tickets=1000,
+                                                 status=Activity.STATUS_SAVED,
+                                                 pic_url='http://47.95.120.180/media/img/8e7cecab01.jpg',
+                                                 remain_tickets=999)
+        self.act_published = Activity.objects.create(name='Activity_A2', key='A2',
+                                                     description='This is activity A2',
+                                                     start_time=datetime.datetime(2018, 10, 24, 18, 25, 29,
+                                                                                  tzinfo=timezone.utc),
+                                                     end_time=datetime.datetime(2018, 10, 25, 18, 25, 29,
+                                                                                tzinfo=timezone.utc),
+                                                     place='place_A2',
+                                                     book_start=datetime.datetime(2018, 10, 22, 10, 25, 29,
+                                                                                  tzinfo=timezone.utc),
+                                                     book_end=datetime.datetime(2018, 10, 23, 10, 25, 29,
+                                                                                tzinfo=timezone.utc),
+                                                     total_tickets=1000,
+                                                     status=Activity.STATUS_PUBLISHED,
+                                                     pic_url='http://47.95.120.180/media/img/8e7cecab01.jpg',
+                                                     remain_tickets=999)
+        self.act_start = Activity.objects.create(name='Activity_A3', key='A3',
+                                                 description='This is activity A3, started',
+                                                 start_time=datetime.datetime(2018, 10, 11, 18, 25, 29,
+                                                                              tzinfo=timezone.utc),
+                                                 end_time=datetime.datetime(2018, 12, 12, 18, 25, 29,
+                                                                            tzinfo=timezone.utc),
+                                                 place='place_A2',
+                                                 book_start=datetime.datetime(2018, 10, 7, 10, 25, 29,
+                                                                              tzinfo=timezone.utc),
+                                                 book_end=datetime.datetime(2018, 10, 8, 10, 25, 29,
+                                                                            tzinfo=timezone.utc),
+                                                 total_tickets=1000,
+                                                 status=Activity.STATUS_PUBLISHED,
+                                                 pic_url='http://47.95.120.180/media/img/8e7cecab01.jpg',
+                                                 remain_tickets=999)
+        self.act_end = Activity.objects.create(name='Activity_A4', key='A4',
+                                               description='This is activity A4, ended',
                                                start_time=datetime.datetime(2018, 10, 11, 18, 25, 29,
                                                                             tzinfo=timezone.utc),
                                                end_time=datetime.datetime(2018, 10, 12, 18, 25, 29,
@@ -118,16 +141,29 @@ class ActivityDetailUnit(TestCase):
                                                status=Activity.STATUS_PUBLISHED,
                                                pic_url='http://47.95.120.180/media/img/8e7cecab01.jpg',
                                                remain_tickets=999)
+        self.act_book_start = Activity.objects.create(name='Activity_A5', key='A5',
+                                                      description='This is activity A5, book started',
+                                                      start_time=datetime.datetime(2018, 11, 25, 18, 25, 29,
+                                                                                   tzinfo=timezone.utc),
+                                                      end_time=datetime.datetime(2018, 11, 26, 18, 25, 29,
+                                                                                 tzinfo=timezone.utc),
+                                                      place='place_A2',
+                                                      book_start=datetime.datetime(2018, 10, 7, 10, 25, 29,
+                                                                                   tzinfo=timezone.utc),
+                                                      book_end=datetime.datetime(2018, 11, 24, 10, 25, 29,
+                                                                                 tzinfo=timezone.utc),
+                                                      total_tickets=1000,
+                                                      status=Activity.STATUS_PUBLISHED,
+                                                      pic_url='http://47.95.120.180/media/img/8e7cecab01.jpg',
+                                                      remain_tickets=999)
 
     def test_check_details_without_login(self):
-        act = Activity.objects.get(key='A1')
-        response = self.client.get('/api/a/activity/detail/', {'id': act.id})
+        response = self.client.get('/api/a/activity/detail/', {'id': self.act_published.id})
         self.assertNotEqual(response.json()['code'], 0)
 
     def test_check_details_with_login(self):
         self.client.force_login(self.user)
-        act = Activity.objects.get(key='A1')
-        response = self.client.get('/api/a/activity/detail/', {'id': act.id})
+        response = self.client.get('/api/a/activity/detail/', {'id': self.act_published.id})
         self.client.logout()
         debug_print(response.json())
         self.assertEqual(response.json()['data']['name'], self.act1.name)
@@ -155,9 +191,8 @@ class ActivityDetailUnit(TestCase):
         self.assertNotEqual(response3.json()['code'], 0)
 
     def test_change_details_without_login(self):
-        act = Activity.objects.get(key='A1')
         response = self.client.post('/api/a/activity/detail/', {
-            'id': act.id,
+            'id': self.act_published.id,
             'name': 'nazong wash body',
             'key': 'N1',
             'description': 'this is a test description',
@@ -175,7 +210,7 @@ class ActivityDetailUnit(TestCase):
     def test_change_details_correctly_with_login(self):
         self.client.force_login(self.user)
         post_dic = {
-            'id': self.act1.id,
+            'id': self.act_saved.id,
             'name': 'nazong wash body',
             'key': 'N1',
             'description': 'this is a test description',
@@ -190,7 +225,7 @@ class ActivityDetailUnit(TestCase):
         }
         response_post = self.client.post('/api/a/activity/detail/', post_dic)
         response_get = self.client.get('/api/a/activity/detail/', {
-            'id': self.act1.id,
+            'id': self.act_saved.id,
         })
         self.client.logout()
         self.assertEqual(response_post.json()['code'], 0)
@@ -228,7 +263,7 @@ class ActivityDetailUnit(TestCase):
     def test_change_details_with_published(self):
         self.client.force_login(self.user)
         response_post = self.client.post('/api/a/activity/detail/', {
-            'id': self.act2.id,
+            'id': self.act_published.id,
             'name': 'nazong wash body',
             'key': 'N1',
             'description': 'this is a test description',
@@ -242,12 +277,93 @@ class ActivityDetailUnit(TestCase):
             'status': 0,
         })
         response_get = self.client.get('/api/a/activity/detail/', {
-            'id': self.act2.id
+            'id': self.act_published.id
         })
         self.client.logout()
         self.assertEqual(response_post.json()['code'], 0)
         self.assertEqual(response_get.json()['code'], 0)
-        self.assertEqual(response_get.json()['data']['status'], 1)
+        self.assertEqual(response_get.json()['data']['status'], self.act_published.status)
+        self.assertEqual(response_get.json()['data']['name'], self.act_published.name)
+        self.assertEqual(response_get.json()['data']['place'], self.act_published.place)
+        self.assertEqual(time.strptime(response_get.json()['data']['bookStart'], "%Y-%m-%dT%H:%M:%S.000Z"),
+                         self.act_published.book_start)
+
+    def test_change_details_with_started(self):
+        self.client.force_login(self.user)
+        response_post = self.client.post('/api/a/activity/detail/', {
+            'id': self.act_start.id,
+            'name': 'modify test',
+            'key': 'N1',
+            'description': 'this is a test description',
+            'startTime': '2018-10-20T08:00:00.000Z',
+            'endTime': '2018-10-21T08:00:00.000Z',
+            'place': '大礼堂',
+            'bookStart': '2018-10-18T08:00:00.000Z',
+            'bookEnd': '2018-10-19T08:00:00.000Z',
+            'totalTickets': 1234,
+            'picUrl': '',
+            'status': 0,
+        })
+        response_get = self.client.get('/api/a/activity/detail/', {
+            'id': self.act_start.id
+        })
+        self.client.logout()
+        self.assertEqual(response_post.json()['code'], 0)
+        self.assertEqual(response_get.json()['code'], 0)
+        self.assertEqual(time.strptime(response_get.json()['data']['bookEnd'], "%Y-%m-%dT%H:%M:%S.000Z"),
+                         self.act_start.book_end)
+
+    def test_change_details_with_ended(self):
+        self.client.force_login(self.user)
+        response_post = self.client.post('/api/a/activity/detail/', {
+            'id': self.act_start.id,
+            'name': 'modify test',
+            'key': 'N1',
+            'description': 'this is a test description',
+            'startTime': '2018-10-20T08:00:00.000Z',
+            'endTime': '2018-10-21T08:00:00.000Z',
+            'place': '大礼堂',
+            'bookStart': '2018-10-18T08:00:00.000Z',
+            'bookEnd': '2018-10-19T08:00:00.000Z',
+            'totalTickets': 1234,
+            'picUrl': '',
+            'status': 0,
+        })
+        response_get = self.client.get('/api/a/activity/detail/', {
+            'id': self.act_start.id
+        })
+        self.client.logout()
+        self.assertEqual(response_post.json()['code'], 0)
+        self.assertEqual(response_get.json()['code'], 0)
+        self.assertEqual(time.strptime(response_get.json()['data']['startTime'], "%Y-%m-%dT%H:%M:%S.000Z"),
+                         self.act_end.start_time)
+        self.assertEqual(time.strptime(response_get.json()['data']['endTime'], "%Y-%m-%dT%H:%M:%S.000Z"),
+                         self.act_end.end_time)
+
+    def test_change_details_with_book_started(self):
+        self.client.force_login(self.user)
+
+        response_post = self.client.post('/api/a/activity/detail/', {
+            'id': self.act_start.id,
+            'name': 'modify test',
+            'key': 'N1',
+            'description': 'this is a test description',
+            'startTime': '2018-10-20T08:00:00.000Z',
+            'endTime': '2018-10-21T08:00:00.000Z',
+            'place': '大礼堂',
+            'bookStart': '2018-10-18T08:00:00.000Z',
+            'bookEnd': '2018-10-19T08:00:00.000Z',
+            'totalTickets': 99999,
+            'picUrl': '',
+            'status': 0,
+        })
+        response_get = self.client.get('/api/a/activity/detail/', {
+            'id': self.act_start.id
+        })
+        self.client.logout()
+        self.assertEqual(response_post.json()['code'], 0)
+        self.assertEqual(response_get.json()['code'], 0)
+        self.assertEqual(response_get.json()['data']['totalTickets'], self.act_book_start.total_tickets)
 
 
 # 以下为课上所做
