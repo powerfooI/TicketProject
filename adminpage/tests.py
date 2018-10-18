@@ -231,7 +231,11 @@ class ActivityDetailUnit(TransactionTestCase):
         self.assertEqual(response_post.json()['code'], 0)
         self.assertEqual(act.name, post_dic['name'])
         self.assertEqual(act.description, post_dic['description'])
+        self.assertEqual(act.start_time.timestamp(), datetime.datetime.strptime(post_dic['startTime'], '%Y-%m-%dT%H:%M:%S.000Z').timestamp())
+        self.assertEqual(act.end_time.timestamp(), datetime.datetime.strptime(post_dic['endTime'], '%Y-%m-%dT%H:%M:%S.000Z').timestamp())
         self.assertEqual(act.place, post_dic['place'])
+        self.assertEqual(act.book_start.timestamp(), datetime.datetime.strptime(post_dic['bookStart'], '%Y-%m-%dT%H:%M:%S.000Z').timestamp())
+        self.assertEqual(act.book_end.timestamp(), datetime.datetime.strptime(post_dic['bookEnd'], '%Y-%m-%dT%H:%M:%S.000Z').timestamp())
         self.assertEqual(act.total_tickets, post_dic['totalTickets'])
         self.assertEqual(act.pic_url, post_dic['picUrl'])
         self.assertEqual(act.status, post_dic['status'])
@@ -606,7 +610,7 @@ class ActivityCheckinUnit(TestCase):
             'actId': self.act_publish.id,
             'ticket': self.ticket_used.unique_id,
         })
-        self.assertEqual(response.json()['code'], 0)
+        self.assertNotEqual(response.json()['code'], 0)
 
     def test_check_in_with_wrong_act_id(self):
         self.client.force_login(self.manager_user)
@@ -655,5 +659,6 @@ class ActivityCheckinUnit(TestCase):
         response = self.client.post('/api/a/activity/checkin/', {
             'actId': self.act_save.id,
             'ticket': self.ticket_valid.unique_id,
+            'studentId': ''
         })
         self.assertEqual(response.json()['code'], 0)

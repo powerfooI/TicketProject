@@ -54,7 +54,6 @@ class ActivityDetail(APIView):
     @login_required
     def get(self):
         self.check_input('id')
-        print(str(self.input['id']))
         act = Activity.objects.get(id=self.input['id'])
         used_tickets = len(Ticket.objects.filter(activity_id=act.id, status=Ticket.STATUS_USED))
         return {
@@ -103,9 +102,6 @@ class ActivityDetail(APIView):
                 fetch_activity.status = self.input['status']
             fetch_activity.save()
         except Activity.DoesNotExist:
-            print('=================')
-            print('lalalalalalololo')
-            print('=================')
             raise BaseError(-1, 'Wrong Activity Id!')
 
 
@@ -233,7 +229,9 @@ class ActivityChekin(APIView):
         self.check_input('actId', 'ticket', 'studentId')
         try:
             if self.input['ticket']:
-                the_ticket = Ticket.objects.get(activity_id=self.input['actId'], id=self.input['ticket'])
+                the_ticket = Ticket.objects.get(activity_id=self.input['actId'], unique_id=self.input['ticket'])
+                if the_ticket.status != Ticket.STATUS_VALID:
+                    raise BaseError(-1, 'Not a valid ticket!')
                 the_ticket.status = Ticket.STATUS_USED
                 the_ticket.save()
                 return {
@@ -242,6 +240,8 @@ class ActivityChekin(APIView):
                 }
             else:
                 the_ticket = Ticket.objects.get(activity_id=self.input['actId'], student_id=self.input['studentId'])
+                if the_ticket.status != Ticket.STATUS_VALID:
+                    raise BaseError(-1, 'Not a valid ticket!')
                 the_ticket.status = Ticket.STATUS_USED
                 the_ticket.save()
                 return {
