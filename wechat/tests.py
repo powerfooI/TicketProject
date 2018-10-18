@@ -1,4 +1,122 @@
 from django.test import TestCase
+import datetime,time
+from django.utils import timezone
+from wechat.models import *
+from django.test import Client
+from WeChatTicket import settings
+
+import lxml.etree as ET
+
+'''
+wechat POST:
+/wechat?signature=<content>&timestamp=<timestamp>&nonce=<int_num>&openid=<openid>
+like above, you can use 
+	settings.IGNORE_WECHAT_SIGNATURE = True
+to turn off the _check_signature function, so that you don't need to write that.
+
+A text xml example:(in django, request.body should be a byte string with content like this.)
+<xml>
+	<ToUserName><![CDATA[gh_9caf75c794ee]]></ToUserName>
+	<FromUserName><![CDATA[openid]]></FromUserName>
+	<CreateTime>timestamp</CreateTime>
+	<MsgType><![CDATA[text]]></MsgType>
+	<Content><![CDATA[\xe8\x8d\x89\xe6\x8b\x9f]]></Content>
+	<MsgId>6613267746628708547</MsgId>
+</xml>
+
+A click event:
+<xml>
+    <ToUserName><![CDATA[gh_9caf75c794ee]]></ToUserName>
+    <FromUserName><![CDATA[oOTV-5uRdpJ9vW6AnupsFRzWjgUg]]></FromUserName>
+    <CreateTime>1539772572</CreateTime>
+    <MsgType><![CDATA[event]]></MsgType>
+    <Event><![CDATA[CLICK]]></Event>
+    <EventKey><![CDATA[SERVICE_BOOK_WHAT]]></EventKey>
+</xml>
+
+'''
+
+class customTestCase(TestCase):
+	def isReplyNews(self, res, newscount):
+		self.assertIs(newscount > 0, True)
+
+		self.assertEqual(res.status_code,200)
+		root_elem = ET.fromstring(res.content)
+		self.assertEqual(root_elem.tag,'xml')
+		
+		children = root_elem.getchildren()
+		Tags = []
+
+		for child in children:
+			Tags.append(child.tag)
+
+		self.assertIs('MsgType' in Tags, True)
+		self.assertIs('Articles' in Tags, True)
+		self.assertIs('ArticleCount' in Tags, True)
+
+		for child in children:
+			if child.tag == 'MsgType':
+				self.assertEqual(child.text, 'news')
+			if child.tag == 'ArticleCount':
+				self.assertEqual(child.text, str(newscount))
+
+	def isReplyText(self, res, contain_content = ''):
+		self.assertEqual(res.status_code,200)
+		root_elem = ET.fromstring(res.content)
+		self.assertEqual(root_elem.tag,'xml')
+		
+		children = root_elem.getchildren()
+		Tags = []
+
+		for child in children:
+			Tags.append(child.tag)
+
+		self.assertIs('MsgType' in Tags, True)
+		self.assertIs('Content' in Tags, True)
+
+		for child in children:
+			if child.tag == 'MsgType':
+				self.assertEqual(child.text, 'text')
+			if child.tag == 'Content':
+				self.assertIs(contain_content in child.text, True)
+
+def generateTextXml(ToUserName, openid, Content, MsgId):
+	root = ET.Element('xml')
+
+	to_user = ET.SubElement(root, 'ToUserName')
+	from_user = ET.SubElement(root, 'FromUserName')
+	create_time = ET.SubElement(root, 'CreateTime')
+	content = ET.SubElement(root, 'Content')
+	msg_type = ET.SubElement(root, 'MsgType')
+	msg_id = ET.SubElement(root, 'MsgId')
+
+	to_user.text = ET.CDATA(ToUserName)
+	from_user.text = ET.CDATA(openid)
+	create_time.text = str(int(time.mktime(datetime.datetime.now().timetuple())))
+	content.text = ET.CDATA(Content)
+	msg_type.text = ET.CDATA('text')
+	msg_id.text = str(MsgId)
+
+	return ET.tostring(root, encoding='utf-8')
+
+def generateClickXml(ToUserName, openid, EventKey):
+	root = ET.Element('xml')
+
+	to_user = ET.SubElement(root, 'ToUserName')
+	from_user = ET.SubElement(root, 'FromUserName')
+	create_time = ET.SubElement(root, 'CreateTime')
+	event = ET.SubElement(root, 'Event')
+	msg_type = ET.SubElement(root, 'MsgType')
+	event_key = ET.SubElement(root, 'EventKey')
+
+	to_user.text = ET.CDATA(ToUserName)
+	from_user.text = ET.CDATA(openid)
+	create_time.text = str(int(time.mktime(datetime.datetime.now().timetuple())))
+	msg_type.text = ET.CDATA('event')
+	event.text = ET.CDATA('CLICK')
+	event_key.text = ET.CDATA(str(EventKey))
+
+	return ET.tostring(root, encoding='utf-8')
 
 class UserBookingActivityHandlerTest(customTestCase):
     # # 处理文本信息的情况
