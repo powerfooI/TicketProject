@@ -69,11 +69,11 @@ class LogoutUnit(TestCase):
 
     def test_logout_with_login(self):
         self.client.force_login(self.user)
-        response = self.client.post('/api/a/logout/')
+        response = self.client.post('/api/a/logout/', {'logout': 'outoutout'})
         self.assertEqual(response.json()['code'], 0)
 
     def test_logout_without_login(self):
-        response = self.client.post('/api/a/logout/')
+        response = self.client.post('/api/a/logout/', {'logout': 'outoutout'})
         self.assertNotEqual(response.json()['code'], 0)
 
 
