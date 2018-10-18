@@ -695,6 +695,7 @@ class UserQueryTicketHandlerTest(customTestCase):
 			content_type='application/xml', 
 			data=generateClickXml('Toyou', 'student_two', 'SERVICE_GET_TICKET'))
 
+
 		self.isReplyNews(res, 1)
 
 class UserExtractTicketHandlerTest(customTestCase):
