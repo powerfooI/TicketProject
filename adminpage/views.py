@@ -56,6 +56,7 @@ class ActivityDetail(APIView):
         self.check_input('id')
         print(str(self.input['id']))
         act = Activity.objects.get(id=self.input['id'])
+        used_tickets = Ticket.objects.filter(activity_id=act.id, status=Ticket.STATUS_USED)
         return {
             'name': act.name,
             'key': act.key,
@@ -67,6 +68,7 @@ class ActivityDetail(APIView):
             'bookEnd': time.mktime(act.book_end.timetuple()),
             'totalTickets': act.total_tickets,
             'picUrl': act.pic_url,
+            'usedTickets': used_tickets,
             'remainTickets': act.remain_tickets,
             'currentTime': time.mktime(datetime.datetime.now().timetuple()),
             'status': act.status,
@@ -147,7 +149,10 @@ class ActivityDelete(APIView):
         self.check_input('id')
         try:
             act_deleting = Activity.objects.get(id=self.input['id'])
-            act_deleting.delete()
+            if act_deleting.status != Activity.STATUS_DELETED:
+                act_deleting.status = Activity.STATUS_DELETED
+            else:
+                raise BaseError(-1, 'The activity has been deleted!')
         except Activity.DoesNotExist:
             raise BaseError(-1, 'The activity does not exist!')
 
