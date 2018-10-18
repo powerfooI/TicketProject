@@ -82,6 +82,8 @@ class BookWhatHandler(WeChatHandler):
     
     def handle(self):
         published_acts = Activity.objects.filter(status=Activity.STATUS_PUBLISHED)
+        if len(published_acts) == 0:
+            return self.reply_text('对不起，当前没有活动推荐:(')
         response_news = []
         for act in published_acts:
             response_news.append({
@@ -188,7 +190,7 @@ class QueryTicketHandler(WeChatHandler):
         if not user.student_id:
             return self.reply_text(self.get_message('bind_account')) 
         
-        tickets = Ticket.objects.filter(student_id=self.user.student_id)
+        tickets = Ticket.objects.filter(student_id=self.user.student_id, status=Ticket.STATUS_VALID)
         if len(tickets) == 0:
             return self.reply_text("您现在还没有票嗷:)") 
         return_info = []
@@ -220,30 +222,28 @@ class ExtractTicketHandler(WeChatHandler):
 
         # 检测活动名的合法性
         act_key = self.input['Content'][len('取票 '):]
-        acts = Activity.objects.filter(key=act_key)
+        acts = Activity.objects.filter(key=act_key, status=Activity.STATUS_PUBLISHED)
         if len(acts) == 0:
-            return self.reply_text('【 检票失败 】 活动不存在哦~')
+            return self.reply_text('【 取票失败 】 活动不存在哦~')
         act = acts[0]
 
         # 检测是否有未使用的对应活动的票
-        tickets = Ticket.objects.filter(student_id=user.student_id, activity=act.key, status=Ticket.STATUS_VALID)
+        tickets = Ticket.objects.filter(student_id=user.student_id, activity=act, status=Ticket.STATUS_VALID)
         if len(tickets) == 0:
-            return self.reply_text('【 检票失败 】 您没有此活动中未使用的票嗷！')
+            return self.reply_text('【 取票失败 】 您没有此活动中未使用的票嗷！')
         
         # 检测活动是否开始
         ticket = tickets[0]
-        current_timestamp = datetime.timezone.now().timestamp()
+        current_timestamp = timezone.now().timestamp()
         start_timestamp = act.start_time.timestamp()
         end_timestamp = act.end_time.timestamp()
-        # 开始还是结束后不能检票嘛？
+        # 开始还是结束后不能取票嘛？
         if current_timestamp > end_timestamp:
-            return self.reply_text('【 检票失败 】 活动已经结束！')
+            return self.reply_text('【 取票失败 】 活动已经结束！')
 
-        # 检票
-        ticket.status = Ticket.STATUS_USED
-        tickets.save()
+        # 取票，不变更数据库
         return self.reply_single_news({
-            'Title': "【 检票成功 】 " + act.name,
+            'Title': "【 取票成功 】 " + act.name,
             'Description': act.description,
             'Url': self.url_activity(act.key),
         })
@@ -268,19 +268,19 @@ class RefundTicketHandler(WeChatHandler):
 
         # 检测活动名的合法性
         act_key = self.input['Content'][len('退票 '):]
-        acts = Activity.objects.filter(key=act_key)
+        acts = Activity.objects.filter(key=act_key, status=Activity.STATUS_PUBLISHED)
         if len(acts) == 0:
             return self.reply_text('【 退票失败 】 活动不存在哦~')
         act = acts[0]
 
         # 检测是否有未使用的对应活动的票
-        tickets = Ticket.objects.filter(student_id=user.student_id, activity=act.key, status=Ticket.STATUS_VALID)
+        tickets = Ticket.objects.filter(student_id=user.student_id, activity=act, status=Ticket.STATUS_VALID)
         if len(tickets) == 0:
             return self.reply_text('【 退票失败 】 您没有此活动中未使用的票嗷！')
         
         # 检测活动是否开始
         ticket = tickets[0]
-        current_timestamp = datetime.timezone.now().timestamp()
+        current_timestamp = timezone.now().timestamp()
         start_timestamp = act.start_time.timestamp()
         end_timestamp = act.end_time.timestamp()
         # 开始还是结束后不能退票嘛？
@@ -289,7 +289,9 @@ class RefundTicketHandler(WeChatHandler):
 
         # 退票
         ticket.status = Ticket.STATUS_CANCELLED
-        tickets.save()
+        ticket.save()
+        act.remain_tickets += 1
+        act.save()
         return self.reply_single_news({
             'Title': "【 退票成功 】 " + act.name,
             'Description': act.description,
