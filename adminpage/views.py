@@ -41,7 +41,7 @@ class Login(APIView):
 
 
 class Logout(APIView):
-    
+
     @login_required
     def post(self):
         logout(self.request)
@@ -54,9 +54,8 @@ class ActivityDetail(APIView):
     @login_required
     def get(self):
         self.check_input('id')
-        print(str(self.input['id']))
         act = Activity.objects.get(id=self.input['id'])
-        used_tickets = Ticket.objects.filter(activity_id=act.id, status=Ticket.STATUS_USED)
+        used_tickets = len(Ticket.objects.filter(activity_id=act.id, status=Ticket.STATUS_USED))
         return {
             'name': act.name,
             'key': act.key,
@@ -70,13 +69,14 @@ class ActivityDetail(APIView):
             'picUrl': act.pic_url,
             'usedTickets': used_tickets,
             'remainTickets': act.remain_tickets,
+            'bookedTickets': act.total_tickets - act.remain_tickets,
             'currentTime': time.mktime(datetime.datetime.now().timetuple()),
             'status': act.status,
         }
 
     @login_required
     def post(self):
-        self.check_input('id', 'name', 'key', 'place', 'description', 'picUrl', 'startTime',
+        self.check_input('id', 'name', 'place', 'description', 'picUrl', 'startTime',
                          'endTime', 'bookStart', 'bookEnd', 'totalTickets', 'status')
         try:
             fetch_activity = Activity.objects.get(id=self.input['id'])
@@ -88,11 +88,11 @@ class ActivityDetail(APIView):
                 fetch_activity.start_time = self.input['startTime']
                 fetch_activity.end_time = self.input['endTime']
                 fetch_activity.total_tickets = self.input['totalTickets']
-            elif current_time < fetch_activity.start_time:
+            elif current_time < fetch_activity.start_time and current_time >= fetch_activity.book_start:
                 fetch_activity.start_time = self.input['startTime']
                 fetch_activity.end_time = self.input['endTime']
-                fetch_activity.total_tickets = self.input['totalTickets']
-            elif current_time < fetch_activity.end_time:
+                fetch_activity.book_end = self.input['bookEnd']
+            elif current_time < fetch_activity.end_time and current_time >= fetch_activity.start_time:
                 fetch_activity.start_time = self.input['startTime']
                 fetch_activity.end_time = self.input['endTime']
             if fetch_activity.status != Activity.STATUS_PUBLISHED:
@@ -100,6 +100,7 @@ class ActivityDetail(APIView):
                 fetch_activity.place = self.input['place']
                 fetch_activity.book_start = self.input['bookStart']
                 fetch_activity.status = self.input['status']
+            fetch_activity.save()
         except Activity.DoesNotExist:
             raise BaseError(-1, 'Wrong Activity Id!')
 
@@ -151,6 +152,7 @@ class ActivityDelete(APIView):
             act_deleting = Activity.objects.get(id=self.input['id'])
             if act_deleting.status != Activity.STATUS_DELETED:
                 act_deleting.status = Activity.STATUS_DELETED
+                act_deleting.save()
             else:
                 raise BaseError(-1, 'The activity has been deleted!')
         except Activity.DoesNotExist:
@@ -227,13 +229,21 @@ class ActivityChekin(APIView):
         self.check_input('actId', 'ticket', 'studentId')
         try:
             if self.input['ticket']:
-                the_ticket = Ticket.objects.get(activity_id=self.input['actId'], id=self.input['ticket'])
+                the_ticket = Ticket.objects.get(activity_id=self.input['actId'], unique_id=self.input['ticket'])
+                if the_ticket.status != Ticket.STATUS_VALID:
+                    raise BaseError(-1, 'Not a valid ticket!')
+                the_ticket.status = Ticket.STATUS_USED
+                the_ticket.save()
                 return {
                     'ticket': the_ticket.id,
                     'studentId': the_ticket.student_id
                 }
             else:
                 the_ticket = Ticket.objects.get(activity_id=self.input['actId'], student_id=self.input['studentId'])
+                if the_ticket.status != Ticket.STATUS_VALID:
+                    raise BaseError(-1, 'Not a valid ticket!')
+                the_ticket.status = Ticket.STATUS_USED
+                the_ticket.save()
                 return {
                     'ticket': the_ticket.id,
                     'studentId': the_ticket.student_id
