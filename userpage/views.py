@@ -8,23 +8,34 @@ import datetime
 
 class UserBind(APIView):
 
-    def validate_user(self):
+    def validate_user(self, user):
         """
         input: self.input['student_id'] and self.input['password']
         raise: ValidateError when validating failed
         """
-        return True
+        if not user:
+            raise BaseError(-1, 'User not exists')
+        elif user.student_id:
+            raise BaseError(-1, 'This user has binded a student id')
+        else:
+            return True
 
     def get(self):
         self.check_input('openid')
-        return User.get_by_openid(self.input['openid']).student_id
+        student_id = User.get_by_openid(self.input['openid']).student_id
+        if student_id:
+            return student_id
+        return ''
 
     def post(self):
         self.check_input('openid', 'student_id', 'password')
         user = User.get_by_openid(self.input['openid'])
-        self.validate_user()
+        self.validate_user(user)
         user.student_id = self.input['student_id']
-        user.save()
+        try:
+            user.save()
+        except:
+            raise BaseError(-1, 'this student id has been binded by others')
 
 
 class ActivityDetail(APIView):
