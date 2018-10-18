@@ -15,3 +15,6 @@ notifications:
 before_install:
 - openssl aes-256-cbc -K $encrypted_1f0b0eb34f3f_key -iv $encrypted_1f0b0eb34f3f_iv
   -in configs.json.enc -out configs.json -d
+sudo: true
+before_script:
+  - bash .travis.install-mysql-5.7.sh
