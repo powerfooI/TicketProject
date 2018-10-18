@@ -102,11 +102,10 @@ class BookingActivityHandler(WeChatHandler):
         return False
     
     def handle(self):
-        with transaction.commit_on_success():            
+        with transaction.atomic():     
             # 测试是否存在此用户
             try:
                 user = User.objects.select_for_update().get(open_id=self.user.open_id) # 悲观锁
-                # user = User.objects.get(open_id=self.user.open_id) # 悲观锁
             except User.DoesNotExist:
                 raise BaseError(-1, 'User does not exist.')
 
@@ -118,12 +117,10 @@ class BookingActivityHandler(WeChatHandler):
             if self.is_msg_type('text'):
                 act_key = self.input['Content'][len("抢票 "):]
                 acts = Activity.objects.select_for_update().filter(key=act_key)
-                # acts = Activity.objects.filter(key=act_key)
             # 处理点击事件的情况
             else:
                 act_id = int(self.input['EventKey'].split('_')[-1])
                 acts = Activity.objects.select_for_update().filter(id=act_id)
-                # acts = Activity.objects.filter(id=act_id)
 
             # 检查活动
             if len(acts) == 0:
@@ -145,14 +142,7 @@ class BookingActivityHandler(WeChatHandler):
                 activity = act,
                 status = Ticket.STATUS_VALID
             )
-            #tickets_valid_in_the_same_activity = Ticket.objects.filter(
-            #    student_id = user.student_id,
-            #    activity = act,
-            #    status = Ticket.STATUS_VALID
-            #)
-
             if len(tickets_valid_in_the_same_activity) > 0:
-                tickets_valid_in_the_same_activity.save()
                 return self.reply_text("【 抢票失败 】 请不要重复抢票")
             
             tickets_used_in_the_same_activity = Ticket.objects.select_for_update().filter(
@@ -160,16 +150,9 @@ class BookingActivityHandler(WeChatHandler):
                 activity = act,
                 status = Ticket.STATUS_USED
             )
-            #tickets_used_in_the_same_activity = Ticket.objects.filter(
-            #    student_id = user.student_id,
-            #    activity = act,
-            #    status = Ticket.STATUS_USED
-            #)
             if len(tickets_used_in_the_same_activity) > 0:
-                tickets_used_in_the_same_activity.save()
                 return self.reply_text("【 抢票失败 】 请不要重复抢票") 
             
-
             # 票充足，处理活动表格、电子票表格，失败、成功都则返回对应信息
             act.remain_tickets = act.remain_tickets - 1
             ticket_unique_id = str(uuid.uuid1()) + str(user.student_id)
@@ -183,7 +166,6 @@ class BookingActivityHandler(WeChatHandler):
             )
 
             act.save()
-            user.save()
             return self.reply_single_news({
                 'Title': "【 抢票成功 】 " + act.name,
                 'Description': act.description,
