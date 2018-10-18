@@ -129,20 +129,20 @@ class BookingActivityHandler(WeChatHandler):
         # 检查活动
         if len(acts) == 0:
             transaction.rollback(sid)
-            return self.reply_text("对不起，这儿没有对应的活动:(") 
+            return self.reply_text("【 抢票失败 】 对不起，这儿没有对应的活动:(") 
         act = acts[0]
         if act.status != Activity.STATUS_PUBLISHED:
             transaction.rollback(sid)
-            return self.reply_text("对不起，这儿没有对应的活动:(") 
+            return self.reply_text("【 抢票失败 】 对不起，这儿没有对应的活动:(") 
         current_timestamp = timezone.now().timestamp()
         book_start_timestamp = act.book_start.timestamp()
         book_end_timestamp = act.book_end.timestamp()
         if current_timestamp < book_start_timestamp or book_end_timestamp < current_timestamp:
             transaction.rollback(sid)
-            return self.reply_text("对不起，现在不是抢票时间:(") 
+            return self.reply_text("【 抢票失败 】 对不起，现在不是抢票时间:(") 
         if act.remain_tickets <= 0:
             transaction.rollback(sid)
-            return self.reply_text("对不起，已经没有余票了:(") 
+            return self.reply_text("【 抢票失败 】 对不起，已经没有余票了:(") 
 
         # 票充足，处理活动表格、电子票表格，失败、成功都则返回对应信息
         act.remain_tickets = act.remain_tickets - 1
