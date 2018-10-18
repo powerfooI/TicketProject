@@ -299,7 +299,7 @@ class UserBookingActivityHandlerTest(customTestCase):
 	def test_post_activity_not_existed(self):
 		res = self.client.post('/wechat/', 
 			content_type='application/xml', 
-			data=generateTextXml('Toyou', 'sad_man_1', '抢票 不存在的', 123456))
+			data=generateTextXml('Toyou', 'sad_man_1', '抢票 A100', 123456))
 
 		self.isReplyText(res, '失败 】 对不起，这儿没有对应的活动:(')
 
