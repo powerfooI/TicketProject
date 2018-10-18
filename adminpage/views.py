@@ -56,7 +56,7 @@ class ActivityDetail(APIView):
         self.check_input('id')
         print(str(self.input['id']))
         act = Activity.objects.get(id=self.input['id'])
-        used_tickets = Ticket.objects.filter(activity_id=act.id, status=Ticket.STATUS_USED)
+        used_tickets = len(Ticket.objects.filter(activity_id=act.id, status=Ticket.STATUS_USED))
         return {
             'name': act.name,
             'key': act.key,
