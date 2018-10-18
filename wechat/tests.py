@@ -138,7 +138,7 @@ class UserBookingActivityHandlerTest(customTestCase):
 		settings.IGNORE_WECHAT_SIGNATURE = True
 
 		# A1
-		act_saved_but_not_published = Activity.objects.create(
+		self.act_saved_but_not_published = Activity.objects.create(
 			name        = 'Activity_A1', 
 			key         = 'A1', 
 			description = 'This is activity A1',
@@ -154,7 +154,7 @@ class UserBookingActivityHandlerTest(customTestCase):
 		)
 
 		# A2
-		act_deleted = Activity.objects.create(
+		self.act_deleted = Activity.objects.create(
 			name        = 'Activity_A2', 
 			key         = 'A2', 
 			description = 'This is activity A2',
@@ -170,7 +170,7 @@ class UserBookingActivityHandlerTest(customTestCase):
 		)
 
 		# A3
-		act_published_but_it_is_to_early_to_book = Activity.objects.create(
+		self.act_published_but_it_is_to_early_to_book = Activity.objects.create(
 			name        = 'Activity_A3', 
 			key         = 'A3', 
 			description = 'This is activity A3',
@@ -186,7 +186,7 @@ class UserBookingActivityHandlerTest(customTestCase):
 		)
 
 		# A4
-		act_published_but_it_is_to_late_to_book = Activity.objects.create(
+		self.act_published_but_it_is_to_late_to_book = Activity.objects.create(
 			name        = 'Activity_A4', 
 			key         = 'A4', 
 			description = 'This is activity A4',
@@ -202,7 +202,7 @@ class UserBookingActivityHandlerTest(customTestCase):
 		)
 
 		# A5
-		act_published_and_it_is_time_to_book_without_remain_tickets = Activity.objects.create(
+		self.act_published_and_it_is_time_to_book_without_remain_tickets = Activity.objects.create(
 			name        = 'Activity_A5', 
 			key         = 'A5', 
 			description = 'This is activity A5',
@@ -218,7 +218,7 @@ class UserBookingActivityHandlerTest(customTestCase):
 		)
 
 		# A6
-		act_published_and_it_is_time_to_book_with_remain_tickets = Activity.objects.create(
+		self.act_published_and_it_is_time_to_book_with_remain_tickets = Activity.objects.create(
 			name        = 'Activity_A6', 
 			key         = 'A6', 
 			description = 'This is activity A6',
@@ -241,7 +241,7 @@ class UserBookingActivityHandlerTest(customTestCase):
 		Ticket.objects.create(
 			student_id='2015080046', 
 			unique_id='111111', 
-			activity=act_published_and_it_is_time_to_book_with_remain_tickets, 
+			activity=self.act_published_and_it_is_time_to_book_with_remain_tickets, 
 			status=Ticket.STATUS_CANCELLED
 		)
 
@@ -250,7 +250,7 @@ class UserBookingActivityHandlerTest(customTestCase):
 		Ticket.objects.create(
 			student_id='2015080047', 
 			unique_id='222222', 
-			activity=act_published_and_it_is_time_to_book_with_remain_tickets, 
+			activity=self.act_published_and_it_is_time_to_book_with_remain_tickets, 
 			status=Ticket.STATUS_USED
 		)
 
@@ -259,7 +259,7 @@ class UserBookingActivityHandlerTest(customTestCase):
 		Ticket.objects.create(
 			student_id='2015080048', 
 			unique_id='333333', 
-			activity=act_published_and_it_is_time_to_book_with_remain_tickets, 
+			activity=self.act_published_and_it_is_time_to_book_with_remain_tickets, 
 			status=Ticket.STATUS_VALID
 		)
 
@@ -268,7 +268,7 @@ class UserBookingActivityHandlerTest(customTestCase):
 		Ticket.objects.create(
 			student_id='2015080049', 
 			unique_id='444444', 
-			activity=act_published_and_it_is_time_to_book_without_remain_tickets, 
+			activity=self.act_published_and_it_is_time_to_book_without_remain_tickets, 
 			status=Ticket.STATUS_VALID
 		)
 
@@ -286,7 +286,7 @@ class UserBookingActivityHandlerTest(customTestCase):
 		res = self.client.post('/wechat/', 
 			content_type='application/xml', 
 			data=generateClickXml('Toyou', 'social_people_2', 
-				'BOOKING_ACTIVITY_' + str(act_saved_but_not_published.id)))
+				'BOOKING_ACTIVITY_' + str(self.act_saved_but_not_published.id)))
 		self.isReplyText(res, '点此绑定学号')
 
 
@@ -326,7 +326,7 @@ class UserBookingActivityHandlerTest(customTestCase):
 		res = self.client.post('/wechat/', 
 			content_type='application/xml', 
 			data=generateClickXml('Toyou', 'sad_man_1', 'BOOKING_ACTIVITY_' 
-				+ str(act_published_but_it_is_to_early_to_book.id)))
+				+ str(self.act_published_but_it_is_to_early_to_book.id)))
 
 		self.isReplyText(res, '失败 】 对不起，这儿没有对应的活动:(')
 
@@ -343,7 +343,7 @@ class UserBookingActivityHandlerTest(customTestCase):
 		res = self.client.post('/wechat/', 
 			content_type='application/xml', 
 			data=generateClickXml('Toyou', 'sad_man_1', 'BOOKING_ACTIVITY_' 
-				+ str(act_published_but_it_is_to_late_to_book.id)))
+				+ str(self.act_published_but_it_is_to_late_to_book.id)))
 
 		self.isReplyText(res, '失败 】 对不起，这儿没有对应的活动:(')
 
@@ -360,7 +360,7 @@ class UserBookingActivityHandlerTest(customTestCase):
 		res = self.client.post('/wechat/', 
 			content_type='application/xml', 
 			data=generateClickXml('Toyou', 'sad_man_1', 'BOOKING_ACTIVITY_' 
-				+ str(act_published_and_it_is_time_to_book_without_remain_tickets.id)))
+				+ str(self.act_published_and_it_is_time_to_book_without_remain_tickets.id)))
 
 		self.isReplyText(res, '失败 】 对不起，已经没有余票了:(')
 
@@ -375,7 +375,7 @@ class UserBookingActivityHandlerTest(customTestCase):
 
 		tick = Ticket.objects.get(
 			student_id='2015080046', 
-			activity=act_published_and_it_is_time_to_book_with_remain_tickets
+			activity=self.act_published_and_it_is_time_to_book_with_remain_tickets
 		)
 		self.assertEqual(tick.status, Ticket.STATUS_VALID)
 
@@ -391,11 +391,11 @@ class UserBookingActivityHandlerTest(customTestCase):
 		res = self.client.post('/wechat/', 
 			content_type='application/xml', 
 			data=generateClickXml('Toyou', 'gay_dog_1', 'BOOKING_ACTIVITY_' 
-				+ str(act_published_and_it_is_time_to_book_with_remain_tickets.id)))
+				+ str(self.act_published_and_it_is_time_to_book_with_remain_tickets.id)))
 
 		tick = Ticket.objects.get(
 			student_id='2015080046', 
-			activity=act_published_and_it_is_time_to_book_with_remain_tickets
+			activity=self.act_published_and_it_is_time_to_book_with_remain_tickets
 		)
 		self.assertEqual(tick.status, Ticket.STATUS_VALID)
 
@@ -417,7 +417,7 @@ class UserBookingActivityHandlerTest(customTestCase):
 		res = self.client.post('/wechat/', 
 			content_type='application/xml', 
 			data=generateClickXml('Toyou', 'gay_dog_2', 'BOOKING_ACTIVITY_' 
-				+ str(act_published_and_it_is_time_to_book_with_remain_tickets.id)))
+				+ str(self.act_published_and_it_is_time_to_book_with_remain_tickets.id)))
 
 		self.isReplyText(res, '失败 】 请不要重复抢票')
 
@@ -434,7 +434,7 @@ class UserBookingActivityHandlerTest(customTestCase):
 		res = self.client.post('/wechat/', 
 			content_type='application/xml', 
 			data=generateClickXml('Toyou', 'gay_dog_3', 'BOOKING_ACTIVITY_' 
-				+ str(act_published_and_it_is_time_to_book_with_remain_tickets.id)))
+				+ str(self.act_published_and_it_is_time_to_book_with_remain_tickets.id)))
 
 		self.isReplyText(res, '失败 】 请不要重复抢票')
 
@@ -449,7 +449,7 @@ class UserBookingActivityHandlerTest(customTestCase):
 
 		tick = Ticket.objects.get(
 			student_id='2015080049', 
-			activity=act_published_and_it_is_time_to_book_with_remain_tickets
+			activity=self.act_published_and_it_is_time_to_book_with_remain_tickets
 		)
 		self.assertEqual(tick.status, Ticket.STATUS_VALID)
 
@@ -464,12 +464,12 @@ class UserBookingActivityHandlerTest(customTestCase):
 		res = res = self.client.post('/wechat/', 
 			content_type='application/xml', 
 			data=generateClickXml('Toyou', 'gay_dog_4', 'BOOKING_ACTIVITY_' 
-				+ str(act_published_and_it_is_time_to_book_with_remain_tickets.id)))
+				+ str(self.act_published_and_it_is_time_to_book_with_remain_tickets.id)))
 		self.isReplyNews(res, 1)
 
 		tick = Ticket.objects.get(
 			student_id='2015080049', 
-			activity=act_published_and_it_is_time_to_book_with_remain_tickets
+			activity=self.act_published_and_it_is_time_to_book_with_remain_tickets
 		)
 		self.assertEqual(tick.status, Ticket.STATUS_VALID)
 
@@ -488,7 +488,7 @@ class UserBookingActivityHandlerTest(customTestCase):
 
 		tick = Ticket.objects.get(
 			student_id='2015080045', 
-			activity=act_published_and_it_is_time_to_book_with_remain_tickets
+			activity=self.act_published_and_it_is_time_to_book_with_remain_tickets
 		)
 		self.assertEqual(tick.status, Ticket.STATUS_VALID)
 
@@ -504,12 +504,12 @@ class UserBookingActivityHandlerTest(customTestCase):
 		res = res = self.client.post('/wechat/', 
 			content_type='application/xml', 
 			data=generateClickXml('Toyou', 'sad_man_1', 'BOOKING_ACTIVITY_' 
-				+ str(act_published_and_it_is_time_to_book_with_remain_tickets.id)))
+				+ str(self.act_published_and_it_is_time_to_book_with_remain_tickets.id)))
 		self.isReplyNews(res, 1)
 
 		tick = Ticket.objects.get(
 			student_id='2015080045', 
-			activity=act_published_and_it_is_time_to_book_with_remain_tickets
+			activity=self.act_published_and_it_is_time_to_book_with_remain_tickets
 		)
 		self.assertEqual(tick.status, Ticket.STATUS_VALID)
 
