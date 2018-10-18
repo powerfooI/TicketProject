@@ -12,6 +12,7 @@ import datetime
 import uuid
 import os
 
+
 # 系统自带的login_required要设置登录页面 似乎跟我们这个要求不是很符合
 def login_required(func):
     def wrapper(self, *args, **kwargs):
@@ -40,7 +41,8 @@ class Login(APIView):
 
 
 class Logout(APIView):
-
+    
+    @login_required
     def post(self):
         logout(self.request)
         if self.request.user.is_authenticated():
