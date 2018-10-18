@@ -65,9 +65,3 @@ class TicketDetail(APIView):
             'currentTime': time.mktime(datetime.datetime.now().timetuple()),
             'status': tic.status
         }
-
-
-        
-
-
-        
