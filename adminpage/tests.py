@@ -1,5 +1,5 @@
 import datetime
-from django.test import TestCase
+from django.test import TestCase, TransactionTestCase
 from django.utils import timezone
 from wechat.models import *
 from django.contrib.auth.models import User as DjangoUser
@@ -20,7 +20,7 @@ class LoginUnit(TestCase):
     """
 
     def setUp(self):
-        DjangoUser.objects.create(username='admin', password='undefined')
+        self.user = DjangoUser.objects.create_superuser(username='admin', password='undefined', email='aaaa@163.com')
 
     def test_login_with_get_method(self):
         self.client.login(username='admin', password='undefined')
@@ -65,7 +65,7 @@ class LogoutUnit(TestCase):
     """
 
     def setUp(self):
-        self.user = DjangoUser.objects.create(username='admin', password='undefined')
+        self.user = DjangoUser.objects.create_superuser(username='admin', password='undefined', email='aaaa@163.com')
 
     def test_logout_with_login(self):
         self.client.force_login(self.user)
@@ -77,14 +77,14 @@ class LogoutUnit(TestCase):
         self.assertNotEqual(response.json()['code'], 0)
 
 
-class ActivityDetailUnit(TestCase):
+class ActivityDetailUnit(TransactionTestCase):
 
     """
         对ActivityDetail接口的测试
     """
 
     def setUp(self):
-        self.user = DjangoUser.objects.create(username='admin', password='undefined')
+        self.user = DjangoUser.objects.create_superuser(username='admin', password='undefined', email='aaaa@163.com')
         self.act_saved = Activity.objects.create(name='Activity_A1', key='A1',
                                                  description='This is activity A1',
                                                  start_time=datetime.datetime(2018, 11, 24, 18, 25, 29,
@@ -168,7 +168,6 @@ class ActivityDetailUnit(TestCase):
         self.client.force_login(self.user)
         response = self.client.get('/api/a/activity/detail/', {'id': self.act_saved.id})
         self.client.logout()
-        debug_print(response.json())
         self.assertEqual(response.json()['data']['name'], self.act_saved.name)
         self.assertEqual(response.json()['data']['key'], self.act_saved.key)
         self.assertEqual(response.json()['data']['description'], self.act_saved.description)
@@ -216,6 +215,32 @@ class ActivityDetailUnit(TestCase):
         post_dic = {
             'id': self.act_saved.id,
             'name': 'modify test',
+            'description': 'this is a test description',
+            'startTime': '2018-11-20T08:00:00.000Z',
+            'endTime': '2018-11-21T08:00:00.000Z',
+            'place': 'sdsdsds',
+            'bookStart': '2018-11-18T08:00:00.000Z',
+            'bookEnd': '2018-11-19T08:00:00.000Z',
+            'totalTickets': 1234,
+            'picUrl': 'http://47.95.120.180/media/img/8e7cecab01.jpg',
+            'status': 0,
+        }
+        response_post = self.client.post('/api/a/activity/detail/', post_dic)
+        act = Activity.objects.get(id=self.act_saved.id)
+        self.client.logout()
+        self.assertEqual(response_post.json()['code'], 0)
+        self.assertEqual(act.name, post_dic['name'])
+        self.assertEqual(act.description, post_dic['description'])
+        self.assertEqual(act.place, post_dic['place'])
+        self.assertEqual(act.total_tickets, post_dic['totalTickets'])
+        self.assertEqual(act.pic_url, post_dic['picUrl'])
+        self.assertEqual(act.status, post_dic['status'])
+
+    def test_change_details_with_wrong_id(self):
+        self.client.force_login(self.user)
+        post_dic = {
+            'id': 9999,
+            'name': 'modify test',
             'key': 'N1',
             'description': 'this is a test description',
             'startTime': '2018-10-20T08:00:00.000Z',
@@ -228,45 +253,12 @@ class ActivityDetailUnit(TestCase):
             'status': 0,
         }
         response_post = self.client.post('/api/a/activity/detail/', post_dic)
-        response_get = self.client.get('/api/a/activity/detail/', {
-            'id': self.act_saved.id,
-        })
-        self.client.logout()
-        self.assertEqual(response_post.json()['code'], 0)
-        self.assertEqual(response_get.json()['data']['name'], post_dic['name'])
-        self.assertEqual(response_get.json()['data']['key'], post_dic['key'])
-        self.assertEqual(response_get.json()['data']['description'], post_dic['key'])
-        self.assertEqual(response_get.json()['data']['startTime'], time.mktime(post_dic['startTime'].timetuple()))
-        self.assertEqual(response_get.json()['data']['endTime'], time.mktime(post_dic['endTime'].timetuple()))
-        self.assertEqual(response_get.json()['data']['place'], post_dic['place'])
-        self.assertEqual(response_get.json()['data']['bookStart'], time.mktime(post_dic['bookStart'].timetuple()))
-        self.assertEqual(response_get.json()['data']['bookEnd'], time.mktime(post_dic['bookEnd'].timetuple()))
-        self.assertEqual(response_get.json()['data']['totalTickets'], post_dic['totalTickets'])
-        self.assertEqual(response_get.json()['data']['picUrl'], post_dic['picUrl'])
-        self.assertEqual(response_get.json()['data']['status'], post_dic['status'])
-
-    def test_change_details_with_wrong_id(self):
-        self.client.force_login(self.user)
-        response_post = self.client.post('/api/a/activity/detail/', {
-            'id': 99999,
-            'name': 'modify test',
-            'key': 'N1',
-            'description': 'this is a test description',
-            'startTime': '2018-10-20T08:00:00.000Z',
-            'endTime': '2018-10-21T08:00:00.000Z',
-            'place': '大礼堂',
-            'bookStart': '2018-10-18T08:00:00.000Z',
-            'bookEnd': '2018-10-19T08:00:00.000Z',
-            'totalTickets': 1234,
-            'picUrl': '',
-            'status': 1,
-        })
         self.client.logout()
         self.assertNotEqual(response_post.json()['code'], 0)
 
     def test_change_details_with_published(self):
         self.client.force_login(self.user)
-        response_post = self.client.post('/api/a/activity/detail/', {
+        post_dic = {
             'id': self.act_published.id,
             'name': 'modify test',
             'key': 'N1',
@@ -279,22 +271,19 @@ class ActivityDetailUnit(TestCase):
             'totalTickets': 1234,
             'picUrl': '',
             'status': 0,
-        })
-        response_get = self.client.get('/api/a/activity/detail/', {
-            'id': self.act_published.id
-        })
+        }
+        response_post = self.client.post('/api/a/activity/detail/', post_dic)
+        act = Activity.objects.get(id=self.act_published.id)
         self.client.logout()
         self.assertEqual(response_post.json()['code'], 0)
-        self.assertEqual(response_get.json()['code'], 0)
-        self.assertEqual(response_get.json()['data']['status'], self.act_published.status)
-        self.assertEqual(response_get.json()['data']['name'], self.act_published.name)
-        self.assertEqual(response_get.json()['data']['place'], self.act_published.place)
-        self.assertEqual(response_get.json()['data']['bookStart'],
-                         time.mktime(self.act_published.book_start.timetuple()))
+        self.assertEqual(act.name, self.act_published.name)
+        self.assertEqual(act.place, self.act_published.place)
+        self.assertEqual(act.book_start, self.act_published.book_start)
+        self.assertEqual(act.status, self.act_published.status)
 
     def test_change_details_with_started(self):
         self.client.force_login(self.user)
-        response_post = self.client.post('/api/a/activity/detail/', {
+        post_dic = {
             'id': self.act_start.id,
             'name': 'modify test',
             'key': 'N1',
@@ -307,18 +296,16 @@ class ActivityDetailUnit(TestCase):
             'totalTickets': 1234,
             'picUrl': '',
             'status': 0,
-        })
-        response_get = self.client.get('/api/a/activity/detail/', {
-            'id': self.act_start.id
-        })
+        }
+        response_post = self.client.post('/api/a/activity/detail/', post_dic)
+        act = Activity.objects.get(id=self.act_start.id)
         self.client.logout()
         self.assertEqual(response_post.json()['code'], 0)
-        self.assertEqual(response_get.json()['code'], 0)
-        self.assertEqual(response_get.json()['data']['bookEnd'], time.mktime(self.act_start.book_end.timetuple()))
+        self.assertEqual(act.book_end, self.act_start.book_end)
 
     def test_change_details_with_ended(self):
         self.client.force_login(self.user)
-        response_post = self.client.post('/api/a/activity/detail/', {
+        post_dic = {
             'id': self.act_end.id,
             'name': 'modify test',
             'key': 'N1',
@@ -331,20 +318,17 @@ class ActivityDetailUnit(TestCase):
             'totalTickets': 1234,
             'picUrl': '',
             'status': 0,
-        })
-        response_get = self.client.get('/api/a/activity/detail/', {
-            'id': self.act_end.id
-        })
+        }
+        response_post = self.client.post('/api/a/activity/detail/', post_dic)
+        act = Activity.objects.get(id=self.act_end.id)
         self.client.logout()
         self.assertEqual(response_post.json()['code'], 0)
-        self.assertEqual(response_get.json()['code'], 0)
-        self.assertEqual(response_get.json()['data']['startTime'], time.mktime(self.act_end.start_time.timetuple()))
-        self.assertEqual(response_get.json()['data']['endTime'], time.mktime(self.act_end.end_time.timetuple()))
+        self.assertEqual(act.start_time, self.act_end.start_time)
+        self.assertEqual(act.end_time, self.act_end.end_time)
 
     def test_change_details_with_book_started(self):
         self.client.force_login(self.user)
-
-        response_post = self.client.post('/api/a/activity/detail/', {
+        post_dic = {
             'id': self.act_book_start.id,
             'name': 'modify test',
             'key': 'N1',
@@ -357,14 +341,11 @@ class ActivityDetailUnit(TestCase):
             'totalTickets': 99999,
             'picUrl': '',
             'status': 0,
-        })
-        response_get = self.client.get('/api/a/activity/detail/', {
-            'id': self.act_book_start.id
-        })
-        self.client.logout()
+        }
+        response_post = self.client.post('/api/a/activity/detail/', post_dic)
+        act = Activity.objects.get(id=self.act_book_start.id)
         self.assertEqual(response_post.json()['code'], 0)
-        self.assertEqual(response_get.json()['code'], 0)
-        self.assertEqual(response_get.json()['data']['totalTickets'], self.act_book_start.total_tickets)
+        self.assertEqual(act.total_tickets, self.act_book_start.total_tickets)
 
 
 # 以下为课上所做
@@ -374,7 +355,7 @@ class ActivityListUnit(TestCase):
     """
 
     def setUp(self):
-        self.user = DjangoUser.objects.create(username='username', password='password')
+        self.user = DjangoUser.objects.create_superuser(username='username', password='password', email='hhhah@123.com')
         self.act_delete = Activity.objects.create(name='Activity_delete', key='delete',
                                                   description='This is activity A1',
                                                   start_time=datetime.datetime(2018, 10, 21, 18, 25, 29,
@@ -440,7 +421,8 @@ class ActivityDeleteUnit(TestCase):
     """
 
     def setUp(self):
-        self.user = DjangoUser.objects.create(username='username', password='password')
+        self.user = DjangoUser.objects.create_superuser(username='username', password='password', email='hhhah@123.com')
+        # self.user = DjangoUser.objects.create_superuser(username='username', password='password')
         self.act_delete = Activity.objects.create(name='Activity_delete', key='delete',
                                                   description='This is activity A1',
                                                   start_time=datetime.datetime(2018, 10, 21, 18, 25, 29,
@@ -531,7 +513,8 @@ class ActivityCreateUnit(TestCase):
     """
 
     def setUp(self):
-        self.user = DjangoUser.objects.create(username='username', password='password')
+        self.user = DjangoUser.objects.create_superuser(username='username', password='password', email='hhhah@123.com')
+        # self.user = DjangoUser.objects.create_superuser(username='username', password='password')
 
     def test_create_without_login(self):
         response = self.client.post('/api/a/activity/create/', {
@@ -578,7 +561,7 @@ class ActivityCheckinUnit(TestCase):
     """
 
     def setUp(self):
-        self.manager_user = DjangoUser.objects.create(username='username', password='password')
+        self.manager_user = DjangoUser.objects.create_superuser(username='username', password='password', email='asda@173.com')
         self.act_save = Activity.objects.create(name='Activity_save', key='save',
                                                 description='This is activity A2',
                                                 start_time=datetime.datetime(2018, 10, 21, 18, 25, 29,
