@@ -41,7 +41,8 @@ class Login(APIView):
 
 
 class Logout(APIView):
-
+    
+    @login_required
     def post(self):
         logout(self.request)
         if self.request.user.is_authenticated():
@@ -54,6 +55,7 @@ class ActivityDetail(APIView):
     def get(self):
         self.check_input('id')
         act = Activity.objects.get(id=self.input['id'])
+        used_tickets = Ticket.objects.filter(activity_id=act.id, status=Ticket.STATUS_USED)
         return {
             'name': act.name,
             'key': act.key,
@@ -65,6 +67,7 @@ class ActivityDetail(APIView):
             'bookEnd': time.mktime(act.book_end.timetuple()),
             'totalTickets': act.total_tickets,
             'picUrl': act.pic_url,
+            'usedTickets': used_tickets,
             'remainTickets': act.remain_tickets,
             'bookedTickets': act.total_tickets - act.remain_tickets,
             'currentTime': time.mktime(datetime.datetime.now().timetuple()),
@@ -112,11 +115,11 @@ class ImageUpload(APIView):
         ext = image.name.split('.')[-1]
         filename = '{}.{}'.format(uuid.uuid4().hex[:10], ext)
         # return the whole path to the file
-        fname = os.path.join(settings.MEDIA_ROOT, "img", filename)
+        fname = os.path.join(settings.STATIC_ROOT, "upload", filename)
         with open(fname, 'wb') as pic:
             for c in image.chunks():
                 pic.write(c)
-        return ''.join('http://', [self.request.get_host(), settings.MEDIA_URL, 'img/', filename])
+        return ''.join(['http://', self.request.get_host(), '/upload/', filename])
 
 
 class ActivityList(APIView):
@@ -148,7 +151,10 @@ class ActivityDelete(APIView):
         self.check_input('id')
         try:
             act_deleting = Activity.objects.get(id=self.input['id'])
-            act_deleting.delete()
+            if act_deleting.status != Activity.STATUS_DELETED:
+                act_deleting.status = Activity.STATUS_DELETED
+            else:
+                raise BaseError(-1, 'The activity has been deleted!')
         except Activity.DoesNotExist:
             raise BaseError(-1, 'The activity does not exist!')
 

@@ -1,0 +1,17 @@
+language: python
+python:
+- '3.6'
+env:
+- DJANGO_VERSION=1.9.5
+services:
+- mysql
+install:
+- pip3 install -r requirements.txt
+script: python3 manage.py test
+notifications:
+  email:
+    recipients:
+    - maoyutao1006@163.com
+before_install:
+- openssl aes-256-cbc -K $encrypted_1f0b0eb34f3f_key -iv $encrypted_1f0b0eb34f3f_iv
+  -in configs.json.enc -out configs.json -d
