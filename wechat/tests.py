@@ -632,7 +632,7 @@ class UserQueryTicketHandlerTest(customTestCase):
 
 		User.objects.create(open_id='student_two', student_id='2016013666')
 		Ticket.objects.create(student_id='2016013666', unique_id='123456', activity=act_a1, status=Ticket.STATUS_VALID)
-		Ticket.objects.create(student_id='2016013666', unique_id='123457', activity=act_a3, status=Ticket.STATUS_USED)
+		Ticket.objects.create(student_id='2016013666', unique_id='123457', activity=act_a3, status=Ticket.STATUS_VALID)
 
 	def test_post_not_bind(self):
 		User.objects.create(open_id='social_people')
@@ -674,6 +674,28 @@ class UserQueryTicketHandlerTest(customTestCase):
 
 		# 期望刚才创建的和【已删除】活动关联的票是不返回的
 		self.isReplyNews(res, 2)
+
+	def test_post_dont_show_ticket_cancelled(self):
+		tick = Ticket.objects.get(unique_id = '123457')
+		tick.status = Ticket.STATUS_CANCELLED
+		tick.save()
+		
+		res = self.client.post('/wechat/', 
+			content_type='application/xml', 
+			data=generateClickXml('Toyou', 'student_two', 'SERVICE_GET_TICKET'))
+
+		self.isReplyNews(res, 1)
+
+	def test_post_dont_show_ticket_used(self):
+		tick = Ticket.objects.get(unique_id = '123457')
+		tick.status = Ticket.STATUS_USED
+		tick.save()
+		
+		res = self.client.post('/wechat/', 
+			content_type='application/xml', 
+			data=generateClickXml('Toyou', 'student_two', 'SERVICE_GET_TICKET'))
+
+		self.isReplyNews(res, 1)
 
 class UserExtractTicketHandlerTest(customTestCase):
 	# 取票只能回复消息
