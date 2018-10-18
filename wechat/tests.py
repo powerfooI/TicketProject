@@ -154,16 +154,23 @@ class UserBookingActivityHandlerTest(customTestCase):
             status=Ticket.STATUS_VALID
         )
 
-### 》》》》》》》》》》》》》》 并未处理点击事件
 
-    def test_post_not_bind(self):
-		User.objects.create(open_id='social_people')
-        for i in range(6):
-            res = self.client.post('/wechat/', 
-                content_type='application/xml', 
-                data=generateTextXml('Toyou', 'social_people', '抢票 A' + str(i + 1), 123456))
+    def test_post_text_not_bind(self):
+		User.objects.create(open_id='social_people_1')
+		res = self.client.post('/wechat/', 
+			content_type='application/xml', 
+			data=generateTextXml('Toyou', 'social_people_1', '抢票 A1', 123456))
+		self.isReplyText(res, '点此绑定学号')
 
-            self.isReplyText(res, '点此绑定学号')
+
+    def test_post_click_not_bind(self):
+		User.objects.create(open_id='social_people_2')
+		res = self.client.post('/wechat/', 
+			content_type='application/xml', 
+			data=generateClickXml('Toyou', 'social_people_2', 
+				'BOOKING_ACTIVITY_' + str(act_saved_but_not_published.id)))
+		self.isReplyText(res, '点此绑定学号')
+
 
 	def test_post_activity_not_existed(self):
 		res = self.client.post('/wechat/', 
@@ -172,12 +179,14 @@ class UserBookingActivityHandlerTest(customTestCase):
 
 		self.isReplyText(res, '失败 】 对不起，这儿没有对应的活动:(')
 
+
 	def test_post_activity_saved(self):
 		res = self.client.post('/wechat/', 
 			content_type='application/xml', 
 			data=generateTextXml('Toyou', 'sad_man_1', '抢票 A1', 123456))
 
 		self.isReplyText(res, '失败 】 对不起，这儿没有对应的活动:(')
+
 
     def test_post_activity_deleted(self):
 		res = self.client.post('/wechat/', 
@@ -186,49 +195,133 @@ class UserBookingActivityHandlerTest(customTestCase):
 
 		self.isReplyText(res, '失败 】 对不起，这儿没有对应的活动:(')
 
-    def test_post_activity_too_early_to_book(self):
+
+    def test_post_text_activity_too_early_to_book(self):
 		res = self.client.post('/wechat/', 
 			content_type='application/xml', 
 			data=generateTextXml('Toyou', 'sad_man_1', '抢票 A3', 123456))
 
 		self.isReplyText(res, '失败 】 对不起，现在不是抢票时间:(')
 
-    def test_post_activity_too_late_to_book(self):
+
+    def test_post_click_activity_too_early_to_book(self):
+		res = self.client.post('/wechat/', 
+			content_type='application/xml', 
+			data=generateClickXml('Toyou', 'sad_man_1', 'BOOKING_ACTIVITY_' 
+				+ str(act_published_but_it_is_to_early_to_book.id)))
+
+		self.isReplyText(res, '失败 】 对不起，这儿没有对应的活动:(')
+
+
+    def test_post_text_activity_too_late_to_book(self):
 		res = self.client.post('/wechat/', 
 			content_type='application/xml', 
 			data=generateTextXml('Toyou', 'sad_man_1', '抢票 A4', 123456))
 
 		self.isReplyText(res, '失败 】 对不起，现在不是抢票时间:(')
 
-    def test_post_activity_without_remain_tickets(self):
+
+    def test_post_click_activity_too_late_to_book(self):
+		res = self.client.post('/wechat/', 
+			content_type='application/xml', 
+			data=generateClickXml('Toyou', 'sad_man_1', 'BOOKING_ACTIVITY_' 
+				+ str(act_published_but_it_is_to_late_to_book.id)))
+
+		self.isReplyText(res, '失败 】 对不起，这儿没有对应的活动:(')
+
+
+    def test_post_text_activity_without_remain_tickets(self):
 		res = self.client.post('/wechat/', 
 			content_type='application/xml', 
 			data=generateTextXml('Toyou', 'sad_man_1', '抢票 A5', 123456))
 
 		self.isReplyText(res, '失败 】 对不起，已经没有余票了:(')
 
-    def test_post_user_has_the_same_ticket_cancelled(self):
+
+    def test_post_click_activity_without_remain_tickets(self):
+		res = self.client.post('/wechat/', 
+			content_type='application/xml', 
+			data=generateClickXml('Toyou', 'sad_man_1', 'BOOKING_ACTIVITY_' 
+				+ str(act_published_and_it_is_time_to_book_without_remain_tickets.id)))
+
+		self.isReplyText(res, '失败 】 对不起，已经没有余票了:(')
+
+
+	## 。。。
+    def test_post_text_user_has_the_same_ticket_cancelled(self):
+		origin_remain = Activity.objects.get(key='A6').remain_tickets
+
 		res = self.client.post('/wechat/', 
 			content_type='application/xml', 
 			data=generateTextXml('Toyou', 'gay_dog_1', '抢票 A6', 123456))
 
-		self.isReplyText(res, '失败 】 --------------------------')
+		tick = Ticket.objects.get(
+            student_id='2015080046', 
+            activity=act_published_and_it_is_time_to_book_with_remain_tickets
+        )
+		self.assertEqual(tick.status, Ticket.STATUS_VALID)
 
-    def test_post_user_has_the_same_ticket_used(self):
+        new_remain = Activity.objects.get(key='A6').remain_tickets
+		self.assertEqual(new_remain - origin_remain, -1)
+
+		tick.delete()
+
+
+    def test_post_click_user_has_the_same_ticket_cancelled(self):
+		origin_remain = Activity.objects.get(key='A6').remain_tickets
+
+		res = self.client.post('/wechat/', 
+			content_type='application/xml', 
+			data=generateClickXml('Toyou', 'gay_dog_1', 'BOOKING_ACTIVITY_' 
+				+ str(act_published_and_it_is_time_to_book_with_remain_tickets.id)))
+
+		tick = Ticket.objects.get(
+            student_id='2015080046', 
+            activity=act_published_and_it_is_time_to_book_with_remain_tickets
+        )
+		self.assertEqual(tick.status, Ticket.STATUS_VALID)
+
+        new_remain = Activity.objects.get(key='A6').remain_tickets
+		self.assertEqual(new_remain - origin_remain, -1)
+
+		tick.delete()
+
+
+    def test_post_text_user_has_the_same_ticket_used(self):
 		res = self.client.post('/wechat/', 
 			content_type='application/xml', 
 			data=generateTextXml('Toyou', 'gay_dog_2', '抢票 A6', 123456))
 
-		self.isReplyText(res, '失败 】 --------------------------')
+		self.isReplyText(res, '失败 】 请不要重复抢票')
 
-    def test_post_user_has_the_same_ticket_valid(self):
+
+    def test_post_click_user_has_the_same_ticket_used(self):
+		res = self.client.post('/wechat/', 
+			content_type='application/xml', 
+			data=generateClickXml('Toyou', 'gay_dog_2', 'BOOKING_ACTIVITY_' 
+				+ str(act_published_and_it_is_time_to_book_with_remain_tickets.id)))
+
+		self.isReplyText(res, '失败 】 请不要重复抢票')
+
+
+    def test_post_text_user_has_the_same_ticket_valid(self):
 		res = self.client.post('/wechat/', 
 			content_type='application/xml', 
 			data=generateTextXml('Toyou', 'gay_dog_3', '抢票 A6', 123456))
 
-		self.isReplyText(res, '失败 】 --------------------------')
+		self.isReplyText(res, '失败 】 请不要重复抢票')
 
-    def test_post_user_has_other_tickets(self):
+
+    def test_post_click_user_has_the_same_ticket_valid(self):
+		res = self.client.post('/wechat/', 
+			content_type='application/xml', 
+			data=generateClickXml('Toyou', 'gay_dog_3', 'BOOKING_ACTIVITY_' 
+				+ str(act_published_and_it_is_time_to_book_with_remain_tickets.id)))
+
+		self.isReplyText(res, '失败 】 请不要重复抢票')
+
+
+    def test_post_text_user_has_other_tickets(self):
         origin_remain = Activity.objects.get(key='A6').remain_tickets
 
 		res = self.client.post('/wechat/', 
@@ -244,8 +337,30 @@ class UserBookingActivityHandlerTest(customTestCase):
 
         new_remain = Activity.objects.get(key='A6').remain_tickets
 		self.assertEqual(new_remain - origin_remain, -1)
+		tick.delete()
 
-	def test_post_right(self):
+
+    def test_post_click_user_has_other_tickets(self):
+		origin_remain = Activity.objects.get(key='A6').remain_tickets
+
+		res = res = self.client.post('/wechat/', 
+			content_type='application/xml', 
+			data=generateClickXml('Toyou', 'gay_dog_4', 'BOOKING_ACTIVITY_' 
+				+ str(act_published_and_it_is_time_to_book_with_remain_tickets.id)))
+		self.isReplyNews(res, 1)
+
+		tick = Ticket.objects.get(
+            student_id='2015080049', 
+            activity=act_published_and_it_is_time_to_book_with_remain_tickets
+        )
+		self.assertEqual(tick.status, Ticket.STATUS_VALID)
+
+        new_remain = Activity.objects.get(key='A6').remain_tickets
+		self.assertEqual(new_remain - origin_remain, -1)
+		tick.delete()
+
+
+	def test_post_text_right(self):
 		origin_remain = Activity.objects.get(key='A6').remain_tickets
 
 		res = self.client.post('/wechat/', 
@@ -262,13 +377,25 @@ class UserBookingActivityHandlerTest(customTestCase):
         new_remain = Activity.objects.get(key='A6').remain_tickets
 		self.assertEqual(new_remain - origin_remain, -1)
 
-    def test_concurrent_different_users_100(self):
-        for i in range(100):
-            User.objects.create(
-                open_id='gay_dog_' + str(100 + i), 
-                student_id= str(2015080100 + i)
-            )
-        return
+		tick.delete()
 
-    def test_concurrent_same_users_100(self):
-        return
+
+	def test_post_click_right(self):
+		origin_remain = Activity.objects.get(key='A6').remain_tickets
+
+		res = res = self.client.post('/wechat/', 
+			content_type='application/xml', 
+			data=generateClickXml('Toyou', 'sad_man_1', 'BOOKING_ACTIVITY_' 
+				+ str(act_published_and_it_is_time_to_book_with_remain_tickets.id)))
+		self.isReplyNews(res, 1)
+
+		tick = Ticket.objects.get(
+            student_id='2015080045', 
+            activity=act_published_and_it_is_time_to_book_with_remain_tickets
+        )
+		self.assertEqual(tick.status, Ticket.STATUS_VALID)
+
+        new_remain = Activity.objects.get(key='A6').remain_tickets
+		self.assertEqual(new_remain - origin_remain, -1)
+
+		tick.delete()

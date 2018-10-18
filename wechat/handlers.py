@@ -144,9 +144,29 @@ class BookingActivityHandler(WeChatHandler):
             transaction.rollback(sid)
             return self.reply_text("【 抢票失败 】 对不起，已经没有余票了:(") 
 
+        # 检查重复抢票的情况
+        tickets_valid_in_the_same_activity = Ticket.object.select_for_update().filter(
+            student_id = user.student_id,
+            activity = act,
+            status = Ticket.STATUS_VALID
+        )
+        if len(tickets_valid_in_the_same_activity) > 0:
+            transaction.rollback(sid)
+            return self.reply_text("【 抢票失败 】 请不要重复抢票") 
+        tickets_valid_in_the_same_activity.save()
+        
+        tickets_used_in_the_same_activity = Ticket.object.select_for_update().filter(
+            student_id = user.student_id,
+            activity = act,
+            status = Ticket.STATUS_USED
+        )
+        if len(tickets_used_in_the_same_activity) > 0:
+            transaction.rollback(sid)
+            return self.reply_text("【 抢票失败 】 请不要重复抢票") 
+        tickets_used_in_the_same_activity.save()
+
         # 票充足，处理活动表格、电子票表格，失败、成功都则返回对应信息
         act.remain_tickets = act.remain_tickets - 1
-        act.save()
         ticket_unique_id = str(uuid.uuid1()) + str(user.student_id)
         if len(ticket_unique_id) > 64:
             ticket_unique_id = ticket_unique_id[:64]
@@ -156,6 +176,10 @@ class BookingActivityHandler(WeChatHandler):
             activity = act,
             status = Ticket.STATUS_VALID
         )
+
+        acts.save()
+        user.save()
+
         return self.reply_single_news({
            'Title': "【 抢票成功 】 " + act.name,
            'Description': act.description,
@@ -184,8 +208,8 @@ class QueryTicketHandler(WeChatHandler):
         return_info = []
         for ticket in tickets:
             return_info.append({
-                'Title': ticket.activity,
-                # 'Description': "",
+                'Title': ticket.activity.name,
+                'Description': "",
                 'Url': self.url_ticket(ticket),
             })
         return self.reply_news(return_info)
