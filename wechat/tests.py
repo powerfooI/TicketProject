@@ -97,7 +97,9 @@ def generateTextXml(ToUserName, openid, Content, MsgId):
 	msg_type.text = ET.CDATA('text')
 	msg_id.text = str(MsgId)
 
-	return ET.tostring(root, encoding='utf-8')
+	#return 
+	s = ET.tostring(root, encoding='utf-8')
+	return s
 
 def generateClickXml(ToUserName, openid, EventKey):
 	root = ET.Element('xml')
@@ -116,7 +118,9 @@ def generateClickXml(ToUserName, openid, EventKey):
 	event.text = ET.CDATA('CLICK')
 	event_key.text = ET.CDATA(str(EventKey))
 
-	return ET.tostring(root, encoding='utf-8')
+	#return 
+	s = ET.tostring(root, encoding='utf-8')
+	return s
 
 class UserBookingActivityHandlerTest(customTestCase):
 	# # 处理文本信息的情况
@@ -328,7 +332,7 @@ class UserBookingActivityHandlerTest(customTestCase):
 			data=generateClickXml('Toyou', 'sad_man_1', 'BOOKING_ACTIVITY_' 
 				+ str(self.act_published_but_it_is_to_early_to_book.id)))
 
-		self.isReplyText(res, '失败 】 对不起，这儿没有对应的活动:(')
+		self.isReplyText(res, '失败 】 对不起，现在不是抢票时间:(')
 
 
 	def test_post_text_activity_too_late_to_book(self):
@@ -345,7 +349,7 @@ class UserBookingActivityHandlerTest(customTestCase):
 			data=generateClickXml('Toyou', 'sad_man_1', 'BOOKING_ACTIVITY_' 
 				+ str(self.act_published_but_it_is_to_late_to_book.id)))
 
-		self.isReplyText(res, '失败 】 对不起，这儿没有对应的活动:(')
+		self.isReplyText(res, '失败 】 对不起，现在不是抢票时间:(')
 
 
 	def test_post_text_activity_without_remain_tickets(self):
@@ -375,7 +379,8 @@ class UserBookingActivityHandlerTest(customTestCase):
 
 		tick = Ticket.objects.get(
 			student_id='2015080046', 
-			activity=self.act_published_and_it_is_time_to_book_with_remain_tickets
+			activity=self.act_published_and_it_is_time_to_book_with_remain_tickets,
+            status=Ticket.STATUS_VALID
 		)
 		self.assertEqual(tick.status, Ticket.STATUS_VALID)
 
@@ -395,7 +400,8 @@ class UserBookingActivityHandlerTest(customTestCase):
 
 		tick = Ticket.objects.get(
 			student_id='2015080046', 
-			activity=self.act_published_and_it_is_time_to_book_with_remain_tickets
+			activity=self.act_published_and_it_is_time_to_book_with_remain_tickets,
+            status=Ticket.STATUS_VALID
 		)
 		self.assertEqual(tick.status, Ticket.STATUS_VALID)
 
