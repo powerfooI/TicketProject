@@ -1,8 +1,13 @@
 # -*- coding: utf-8 -*-
 #
+import datetime
+import uuid
+
 from wechat.wrapper import WeChatHandler
 from wechat.models import *
 from codex.baseerror import *
+from django.db import transaction
+from django.utils import timezone
 
 
 __author__ = "Epsirom"
@@ -68,68 +73,134 @@ class BookEmptyHandler(WeChatHandler):
     def handle(self):
         return self.reply_text(self.get_message('book_empty'))
 
+
 # new added handlers
 class BookWhatHandler(WeChatHandler):
+
     def check (self):
         return self.is_text('抢啥') or self.is_event_click(self.view.event_keys['book_what'])
     
     def handle(self):
-        #raise NotImplementedError('抢啥的handler，可以利用ActivityDetailHandler的方式，返回一些news即可。（ActivityDetailHandler的实现代码质量不高）')
         published_acts = Activity.objects.filter(status=Activity.STATUS_PUBLISHED)
+        if len(published_acts) == 0:
+            return self.reply_text('对不起，当前没有活动推荐:(')
         response_news = []
         for act in published_acts:
             response_news.append({
                 'Title': act.name,
                 'Description': act.description,
                 'Url': self.url_activity(act.id),
-                })
+            })
         return self.reply_news(response_news)
-        # return self.reply_text(self.get_message('book_what'))
     
+
 class BookingActivityHandler(WeChatHandler):
+
     def check (self):
         if self.is_msg_type('text'):
             return self.input['Content'].startswith('抢票 ')
         elif self.is_msg_type('event'):
             return (self.input['Event'] == 'CLICK') and (self.input['EventKey'].startswith(self.view.event_keys['book_header']))
         return False
-        # return self.is_book_event_click(self.view.event_keys['book_header'])
     
     def handle(self):
-        try:
-            user = User.objects.get(open_id=self.user.open_id)
-        except User.DoesNotExist:
-            raise BaseError(-1, 'user does not exist.')
-        if user.student_id:
-            # 使用锁创建一个电子票的记录
-            raise NotImplementedError('book activity API not implemented.')
-        else:
-            raise BaseError(-1, '还未绑定，可能需要添加template')
-        #raise NotImplementedError('抢票的handler，在这里实现逻辑（这个过程可能不标准，代码质量也不高）')
-        #actid = int(self.input['EventKey'].split('_')[-1])
-        #act = Activity.objects.get(id=actid)
-        #return self.reply_single_news({
-        #    'Title': act.name,
-        #    'Description': act.description,
-        #    'Url': self.url_activity(actid),
-        #})
+        with transaction.atomic():     
+            # 测试是否存在此用户
+            try:
+                user = User.objects.select_for_update().get(open_id=self.user.open_id) # 悲观锁
+            except User.DoesNotExist:
+                raise BaseError(-1, 'User does not exist.')
+
+            # 测试用户是否绑定
+            if not user.student_id:
+                return self.reply_text(self.get_message('bind_account'))
+
+            # 处理文本信息的情况
+            if self.is_msg_type('text'):
+                act_key = self.input['Content'][len("抢票 "):]
+                acts = Activity.objects.select_for_update().filter(key=act_key)
+            # 处理点击事件的情况
+            else:
+                act_id = int(self.input['EventKey'].split('_')[-1])
+                acts = Activity.objects.select_for_update().filter(id=act_id)
+
+            # 检查活动
+            if len(acts) == 0:
+                return self.reply_text("【 抢票失败 】 对不起，这儿没有对应的活动:(") 
+            act = acts[0]
+            if act.status != Activity.STATUS_PUBLISHED:
+                return self.reply_text("【 抢票失败 】 对不起，这儿没有对应的活动:(") 
+            current_timestamp = timezone.now().timestamp()
+            book_start_timestamp = act.book_start.timestamp()
+            book_end_timestamp = act.book_end.timestamp()
+            if current_timestamp < book_start_timestamp or book_end_timestamp < current_timestamp:
+                return self.reply_text("【 抢票失败 】 对不起，现在不是抢票时间:(") 
+            if act.remain_tickets <= 0:
+                return self.reply_text("【 抢票失败 】 对不起，已经没有余票了:(")
+
+            # 检查重复抢票的情况
+            tickets_valid_in_the_same_activity = Ticket.objects.select_for_update().filter(
+                student_id = user.student_id,
+                activity = act,
+                status = Ticket.STATUS_VALID
+            )
+            if len(tickets_valid_in_the_same_activity) > 0:
+                return self.reply_text("【 抢票失败 】 请不要重复抢票")
+            
+            tickets_used_in_the_same_activity = Ticket.objects.select_for_update().filter(
+                student_id = user.student_id,
+                activity = act,
+                status = Ticket.STATUS_USED
+            )
+            if len(tickets_used_in_the_same_activity) > 0:
+                return self.reply_text("【 抢票失败 】 请不要重复抢票") 
+            
+            # 票充足，处理活动表格、电子票表格，失败、成功都则返回对应信息
+            act.remain_tickets = act.remain_tickets - 1
+            ticket_unique_id = str(uuid.uuid1()) + str(user.student_id)
+            if len(ticket_unique_id) > 64:
+                ticket_unique_id = ticket_unique_id[:64]
+            Ticket.objects.create(
+                student_id = user.student_id,
+                unique_id = ticket_unique_id,
+                activity = act,
+                status = Ticket.STATUS_VALID
+            )
+
+            act.save()
+            return self.reply_single_news({
+                'Title': "【 抢票成功 】 " + act.name,
+                'Description': act.description,
+                'Url': self.url_activity(act.id),
+            })
+
 
 class QueryTicketHandler(WeChatHandler):
     def check(self):
         return self.is_text('查票') or self.is_event_click(self.view.event_keys['get_ticket'])
 
     def handle(self):
+        # 测试是否存在此用户
         try:
             user = User.objects.get(open_id=self.user.open_id)
         except User.DoesNotExist:
-            raise BaseError(-1, 'user does not exist.')
-        if user.student_id:
-            tickets = Ticket.objects.filter(student_id=user.student_id)
-            
-            raise NotImplementedError('book activity API not implemented.')
-        else:
-            raise BaseError(-1, '还未绑定，可能需要添加template')
-        raise NotImplementedError('query ticket API not implemented.')
+            raise BaseError(-1, 'User does not exist.')
+
+        # 测试用户是否绑定
+        if not user.student_id:
+            return self.reply_text(self.get_message('bind_account')) 
+        
+        tickets = Ticket.objects.filter(student_id=self.user.student_id, status=Ticket.STATUS_VALID)
+        if len(tickets) == 0:
+            return self.reply_text("您现在还没有票嗷:)") 
+        return_info = []
+        for ticket in tickets:
+            return_info.append({
+                'Title': ticket.activity.name,
+                'Description': "",
+                'Url': self.url_ticket(ticket),
+            })
+        return self.reply_news(return_info)
 
 
 class ExtractTicketHandler(WeChatHandler):
@@ -139,7 +210,44 @@ class ExtractTicketHandler(WeChatHandler):
         return False
 
     def handle(self):
-        raise NotImplementedError('extract ticket API not implemented.')
+        # 测试是否存在此用户
+        try:
+            user = User.objects.get(open_id=self.user.open_id)
+        except User.DoesNotExist:
+            raise BaseError(-1, 'User does not exist.')
+
+        # 测试用户是否绑定
+        if not user.student_id:
+            return self.reply_text(self.get_message('bind_account')) 
+
+        # 检测活动名的合法性
+        act_key = self.input['Content'][len('取票 '):]
+        acts = Activity.objects.filter(key=act_key, status=Activity.STATUS_PUBLISHED)
+        if len(acts) == 0:
+            return self.reply_text('【 取票失败 】 活动不存在哦~')
+        act = acts[0]
+
+        # 检测是否有未使用的对应活动的票
+        tickets = Ticket.objects.filter(student_id=user.student_id, activity=act, status=Ticket.STATUS_VALID)
+        if len(tickets) == 0:
+            return self.reply_text('【 取票失败 】 您没有此活动中未使用的票嗷！')
+        
+        # 检测活动是否开始
+        ticket = tickets[0]
+        current_timestamp = timezone.now().timestamp()
+        start_timestamp = act.start_time.timestamp()
+        end_timestamp = act.end_time.timestamp()
+        # 开始还是结束后不能取票嘛？
+        if current_timestamp > end_timestamp:
+            return self.reply_text('【 取票失败 】 活动已经结束！')
+
+        # 取票，不变更数据库
+        return self.reply_single_news({
+            'Title': "【 取票成功 】 " + act.name,
+            'Description': act.description,
+            'Url': self.url_activity(act.key),
+        })
+
 
 class RefundTicketHandler(WeChatHandler):
     def check(self):
@@ -148,7 +256,44 @@ class RefundTicketHandler(WeChatHandler):
         return False
 
     def handle(self):
-        raise NotImplementedError('refund ticket API not implemented.')
+        # 测试是否存在此用户
+        try:
+            user = User.objects.get(open_id=self.user.open_id)
+        except User.DoesNotExist:
+            raise BaseError(-1, 'User does not exist.')
 
+        # 测试用户是否绑定
+        if not user.student_id:
+            return self.reply_text(self.get_message('bind_account')) 
 
+        # 检测活动名的合法性
+        act_key = self.input['Content'][len('退票 '):]
+        acts = Activity.objects.filter(key=act_key, status=Activity.STATUS_PUBLISHED)
+        if len(acts) == 0:
+            return self.reply_text('【 退票失败 】 活动不存在哦~')
+        act = acts[0]
 
+        # 检测是否有未使用的对应活动的票
+        tickets = Ticket.objects.filter(student_id=user.student_id, activity=act, status=Ticket.STATUS_VALID)
+        if len(tickets) == 0:
+            return self.reply_text('【 退票失败 】 您没有此活动中未使用的票嗷！')
+        
+        # 检测活动是否开始
+        ticket = tickets[0]
+        current_timestamp = timezone.now().timestamp()
+        start_timestamp = act.start_time.timestamp()
+        end_timestamp = act.end_time.timestamp()
+        # 开始还是结束后不能退票嘛？
+        if current_timestamp > end_timestamp:
+            return self.reply_text('【 退票失败 】 活动已经结束！')
+
+        # 退票
+        ticket.status = Ticket.STATUS_CANCELLED
+        ticket.save()
+        act.remain_tickets += 1
+        act.save()
+        return self.reply_single_news({
+            'Title': "【 退票成功 】 " + act.name,
+            'Description': act.description,
+            'Url': self.url_activity(act.key),
+        })

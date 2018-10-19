@@ -1,10 +1,16 @@
 language: python
 python:
-- '3.6'
+- '3.5'
 env:
-- DJANGO_VERSION=1.9.5
+- DJANGO_VERSION=1.9.13
 services:
 - mysql
+addons:
+  apt:
+    sources:
+      - mysql-5.7-trusty
+    packages:
+      - mysql-server
 install:
 - pip3 install -r requirements.txt
 script: python3 manage.py test
