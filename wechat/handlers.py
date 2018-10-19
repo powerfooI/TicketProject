@@ -198,7 +198,7 @@ class QueryTicketHandler(WeChatHandler):
             return_info.append({
                 'Title': ticket.activity.name,
                 'Description': "",
-                'Url': self.url_ticket(ticket),
+                'Url': self.url_ticket(self.user.open_id, ticket.unique_id),
             })
         return self.reply_news(return_info)
 
