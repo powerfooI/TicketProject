@@ -256,44 +256,45 @@ class RefundTicketHandler(WeChatHandler):
         return False
 
     def handle(self):
-        # 测试是否存在此用户
-        try:
-            user = User.objects.get(open_id=self.user.open_id)
-        except User.DoesNotExist:
-            raise BaseError(-1, 'User does not exist.')
+        with transaction.atomic():     
+            # 测试是否存在此用户
+            try:
+                user = User.objects.select_for_update().get(open_id=self.user.open_id)
+            except User.DoesNotExist:
+                raise BaseError(-1, 'User does not exist.')
 
-        # 测试用户是否绑定
-        if not user.student_id:
-            return self.reply_text(self.get_message('bind_account')) 
+            # 测试用户是否绑定
+            if not user.student_id:
+                return self.reply_text(self.get_message('bind_account')) 
 
-        # 检测活动名的合法性
-        act_key = self.input['Content'][len('退票 '):]
-        acts = Activity.objects.filter(key=act_key, status=Activity.STATUS_PUBLISHED)
-        if len(acts) == 0:
-            return self.reply_text('【 退票失败 】 活动不存在哦~')
-        act = acts[0]
+            # 检测活动名的合法性
+            act_key = self.input['Content'][len('退票 '):]
+            acts = Activity.objects.select_for_update().filter(key=act_key, status=Activity.STATUS_PUBLISHED)
+            if len(acts) == 0:
+                return self.reply_text('【 退票失败 】 活动不存在哦~')
+            act = acts[0]
 
-        # 检测是否有未使用的对应活动的票
-        tickets = Ticket.objects.filter(student_id=user.student_id, activity=act, status=Ticket.STATUS_VALID)
-        if len(tickets) == 0:
-            return self.reply_text('【 退票失败 】 您没有此活动中未使用的票嗷！')
-        
-        # 检测活动是否开始
-        ticket = tickets[0]
-        current_timestamp = timezone.now().timestamp()
-        start_timestamp = act.start_time.timestamp()
-        end_timestamp = act.end_time.timestamp()
-        # 开始还是结束后不能退票嘛？
-        if current_timestamp > end_timestamp:
-            return self.reply_text('【 退票失败 】 活动已经结束！')
+            # 检测是否有未使用的对应活动的票
+            tickets = Ticket.objects.select_for_update().filter(student_id=user.student_id, activity=act, status=Ticket.STATUS_VALID)
+            if len(tickets) == 0:
+                return self.reply_text('【 退票失败 】 您没有此活动中未使用的票嗷！')
+            
+            # 检测活动是否开始
+            ticket = tickets[0]
+            current_timestamp = timezone.now().timestamp()
+            start_timestamp = act.start_time.timestamp()
+            end_timestamp = act.end_time.timestamp()
+            # 开始还是结束后不能退票嘛？
+            if current_timestamp > end_timestamp:
+                return self.reply_text('【 退票失败 】 活动已经结束！')
 
-        # 退票
-        ticket.status = Ticket.STATUS_CANCELLED
-        ticket.save()
-        act.remain_tickets += 1
-        act.save()
-        return self.reply_single_news({
-            'Title': "【 退票成功 】 " + act.name,
-            'Description': act.description,
-            'Url': self.url_activity(act.key),
-        })
+            # 退票
+            ticket.status = Ticket.STATUS_CANCELLED
+            ticket.save()
+            act.remain_tickets += 1
+            act.save()
+            return self.reply_single_news({
+                'Title': "【 退票成功 】 " + act.name,
+                'Description': act.description,
+                'Url': self.url_activity(act.key),
+            })
