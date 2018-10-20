@@ -580,18 +580,6 @@ class UserBookWhatHandlerTest(customTestCase):
 			pic_url = 'http://47.95.120.180/media/img/8e7cecab01.jpg',
 			remain_tickets = 999)
 
-		Activity.objects.create(name = 'Activity_A4', key = 'A4',
-			description = 'This is activity A4',
-			start_time = datetime.datetime(2018, 10, 21, 18, 25, 29, tzinfo=timezone.utc),
-			end_time = datetime.datetime(2018, 10, 22, 18, 25, 29, tzinfo=timezone.utc),
-			place = 'place_A4',
-			book_start = datetime.datetime(2018, 7, 18, 10, 25, 29, tzinfo=timezone.utc),
-			book_end = datetime.datetime(2018, 7, 10, 10, 25, 29, tzinfo=timezone.utc),
-			total_tickets = 1000,
-			status = Activity.STATUS_DELETED,
-			pic_url = 'http://47.95.120.180/media/img/8e7cecab01.jpg',
-			remain_tickets = 999)
-
 	def test_post_right_text(self):
 		res = self.client.post('/wechat/', 
 			content_type='application/xml', 
@@ -615,11 +603,7 @@ class UserBookWhatHandlerTest(customTestCase):
 			data=generateClickXml('Toyou', 'student', 'SERVICE_BOOK_WHAT'))
 
 		self.isReplyNews(res, 1)
-<<<<<<< HEAD
-    
-=======
-
->>>>>>> c5e67148aeda8a13aaf563b3eb31a8eeb256457a
+		
 	def test_post_no_actvity(self):
 		Activity.objects.get(key='A1').delete()
 		res = self.client.post('/wechat/', 
