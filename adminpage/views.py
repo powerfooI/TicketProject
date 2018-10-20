@@ -196,7 +196,11 @@ class ActivityMenu(APIView):
         query_set = Activity.objects.filter(status__gte=0)
         activities = []
         ind = 1
+        current_time = timezone.now()
         for item in query_set:
+            if current_time > item.end_time:
+                # 活动已经结束
+                continue
             if item.id in existed_ids:
                 activities.append({
                     'id': item.id,
