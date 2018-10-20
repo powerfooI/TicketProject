@@ -536,8 +536,9 @@ class UserBookWhatHandlerTest(customTestCase):
 		    start_time = datetime.datetime(2018, 10, 21, 18, 25, 29, tzinfo=timezone.utc),
 		    end_time = datetime.datetime(2018, 10, 22, 18, 25, 29, tzinfo=timezone.utc),
 		    place = 'place_A1',
-		    book_start = datetime.datetime(2018, 10, 18, 10, 25, 29, tzinfo=timezone.utc),
-		    book_end = datetime.datetime(2018, 10, 10, 10, 25, 29, tzinfo=timezone.utc),
+			# 一直可以抢票的活动
+		    book_start = datetime.datetime(2050, 10, 18, 10, 25, 29, tzinfo=timezone.utc),
+		    book_end = datetime.datetime(2050, 10, 10, 10, 25, 29, tzinfo=timezone.utc),
 		    total_tickets = 1000,
 		    status = Activity.STATUS_PUBLISHED,
 		    pic_url = 'http://47.95.120.180/media/img/8e7cecab01.jpg',
@@ -566,6 +567,18 @@ class UserBookWhatHandlerTest(customTestCase):
 		    status = Activity.STATUS_DELETED,
 		    pic_url = 'http://47.95.120.180/media/img/8e7cecab01.jpg',
 		    remain_tickets = 999)
+        
+		Activity.objects.create(name = 'Activity_A4', key = 'A4',
+			description = 'This is activity A4',
+			start_time = datetime.datetime(2018, 10, 21, 18, 25, 29, tzinfo=timezone.utc),
+			end_time = datetime.datetime(2018, 10, 22, 18, 25, 29, tzinfo=timezone.utc),
+			place = 'place_A4',
+			book_start = datetime.datetime(2018, 7, 18, 10, 25, 29, tzinfo=timezone.utc),
+			book_end = datetime.datetime(2018, 7, 10, 10, 25, 29, tzinfo=timezone.utc),
+			total_tickets = 1000,
+			status = Activity.STATUS_DELETED,
+			pic_url = 'http://47.95.120.180/media/img/8e7cecab01.jpg',
+			remain_tickets = 999)
 
 	def test_post_right_text(self):
 		res = self.client.post('/wechat/', 
@@ -582,6 +595,15 @@ class UserBookWhatHandlerTest(customTestCase):
 
 		self.isReplyNews(res, 1)
 
+	def test_post_dont_show_pass_time(self):
+		act = Activity.objects.get(key='A4')
+		act.status = Activity.STATUS_PUBLISHED
+		res = self.client.post('/wechat/', 
+			content_type='application/xml', 
+			data=generateClickXml('Toyou', 'student', 'SERVICE_BOOK_WHAT'))
+
+		self.isReplyNews(res, 1)
+    
 	def test_post_no_actvity(self):
 		Activity.objects.get(key='A1').delete()
 		res = self.client.post('/wechat/', 
@@ -589,6 +611,7 @@ class UserBookWhatHandlerTest(customTestCase):
 			data=generateClickXml('Toyou', 'student', 'SERVICE_BOOK_WHAT'))
 
 		self.isReplyText(res, '没有活动')
+        
 
 class UserQueryTicketHandlerTest(customTestCase):
 	def setUp(self):
