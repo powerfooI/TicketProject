@@ -81,7 +81,8 @@ class BookWhatHandler(WeChatHandler):
         return self.is_text('抢啥') or self.is_event_click(self.view.event_keys['book_what'])
     
     def handle(self):
-        published_acts = Activity.objects.filter(status=Activity.STATUS_PUBLISHED)
+        current_time = timezone.now()
+        published_acts = Activity.objects.filter(status=Activity.STATUS_PUBLISHED, book_end__gte=current_time)
         if len(published_acts) == 0:
             return self.reply_text('对不起，当前没有活动推荐:(')
         response_news = []
