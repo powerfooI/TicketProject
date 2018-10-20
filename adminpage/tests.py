@@ -22,11 +22,15 @@ class LoginUnit(TestCase):
     def setUp(self):
         self.user = DjangoUser.objects.create_superuser(username='admin', password='undefined', email='aaaa@163.com')
 
-    def test_login_with_get_method(self):
+    def test_login_get_with_login(self):
         self.client.login(username='admin', password='undefined')
         response = self.client.get('/api/a/login/')
         self.assertEqual(response.json()['code'], 0)
 
+    def test_login_get_without_login(self):
+        response = self.client.get('/api/a/login/')
+        self.assertNotEqual(response.json()['code'], 0)
+		
     #   后面是对post方法的测试
 
     def test_login_with_correct_username_and_password(self):
